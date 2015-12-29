@@ -1,0 +1,3010 @@
+[00:00] fizx has joined the channel
+[00:01] samcday_ has joined the channel
+[00:02] firdose: Chainfire: i am just building a cachable static js file server with it
+[00:02] bmavity: zzak: thanks again for the clarification
+[00:03] firdose: could probably use something else, but eventually i want to serve dynamic js files so i am inspired to learn it
+[00:03] pkrumins: 2
+[00:03] Sebmaster: Chainfire: There will be always specialized things for everything, but node can do many things. so you dont have to lern multiple techniques
+[00:04] firdose: there is a certain zen to it, since everything is JSON ;)
+[00:04] Chainfire: Sebmaster yes I do understand that, but I'm looking from a POV where you have a large site built for example in PHP, where you would change some things to use node.js because it's more fit.
+[00:04] Jaye__: anything real time
+[00:05] Jaye__: or hugely concurrent
+[00:05] firdose: yeah u may want to do traking/analytics in node
+[00:05] benreesman has joined the channel
+[00:05] Chainfire: ofcourse you could build the whole thing in Node.js which is undoubtedly faster than the Apache+PHP version, then again, with varnish/nginx/haproxy in front of it you're not very likely to notice the difference ;)
+[00:05] orls: Jaye__ took the words out of my mouth
+[00:05] Sebmaster: Chainfire: I built most of my website with php too, but since i know node, i want to _really_ test it out
+[00:05] benreesman: hi, is anyone aware of a mysql binding for node.js that supports transactions?
+[00:05] samcday_: Respamming a question I asked before: Does anyone know of a node lib to manage transactions? That is, manage transactions on several resources at once
+[00:06] samcday_: Haha ben ;) jinx!
+[00:06] Sebmaster: Chainfire: But isnt nginx a static server?
+[00:06] orls: Chainfire: not when you've got more (or same volume of) writes than reads
+[00:06] samcday_: Well, kinda similar question anyway.
+[00:06] Sebmaster: benreesmen: Um, transactions are made by the database, not your binding...
+[00:06] Chainfire: err yes, you'd put the nginx in front of varnishes to perform ssl/gz and such, in this scenario
+[00:07] Jaye__: also websockets, neither nginx or varnish know how to handle them
+[00:07] benreesman: sebmaster: it seems like node-mysql is the front runner in a lot of ways but the documentation seems to indicate that it doesn't support queries with multiple statements
+[00:07] firdose: mongo may be a better fit than mysql
+[00:07] orls: Chainfire: then you're talking about a multi-comonent, hard to manage (bad experiences from $day_job) stack, where you could have one eensy node server
+[00:07] orls: component^
+[00:08] Sebmaster: benreesman: Thats true. you can still call query() multiple times within a transaction
+[00:08] zzak: bmavity++
+[00:08] v8bot:  zzak has given a beer to bmavity. bmavity now has 2 beers.
+[00:08] Chainfire: Jaye__ anything real time, ok, also in my mind. But I'm a bit hard pressed to find an example of that aside from push notifications and such. Tracking/analytics is an interesting thought, though
+[00:08] benreesman: sebmaster: ah i gotcha
+[00:08] Sebmaster: benreesman: It just means, you cant do query('SELECT x; SELECT y');
+[00:08] Chainfire: orls> one node server doesn't reach the performance of an (nginx/)varnish/apache/php setup
+[00:08] derferman has joined the channel
+[00:09] orls: depends what for ;)
+[00:09] davidc_ has joined the channel
+[00:09] jimt_ has joined the channel
+[00:09] zzak: Sebmaster: you can use nginx as a reverse proxy
+[00:09] Chainfire: the average high load website. but that's also part of the original question though. which parts would you then port to node instead
+[00:10] zzak: ..via cgi
+[00:10] Sebmaster: zzak: I don't know much about the server stuff, I got hosters for that :p
+[00:10] zzak: forgot to add that minor detail ;)
+[00:10] Jaye__: fwiw the stack im using is varnish (for virtual hosts and reverse proxy) in front of multiple node servers
+[00:11] orls: the point is that there will always be other tools that do some particular X better -- done right, a java-based stack can blow the pants off a php stack. Its not about whether node is the prefect tools for all jobs; but if its very good at your use case, you use it 
+[00:11] Chainfire: Jaye__ right, that sounds entirely sensible. however, if the dataset does not exceed the varnish server's capacity and the cache hit to miss ratio is decent, I don't think you'd actually notice a performance difference. Then it becomes fun, not because its needed
+[00:12] orls: as i said before, hight write-to-read ratio, large concurrent request volumes and requirement for pretty nippy responese are my use cases
+[00:12] Chainfire: orls> have a number of examples for that ?
+[00:12] tg: ohai
+[00:14] orls: chat and analytics come to mind
+[00:14] Jaye__: chainfire is actually right that if most of your data is static there is not a meaningful performance difference between node and varnish or nginx, anyways, g2g
+[00:14] orls: oh sure, natch
+[00:14] fizx has joined the channel
+[00:14] nonnikcam has joined the channel
+[00:15] tg: which web framework for node?
+[00:15] tg: i've only used express so far
+[00:15] orls: chainfire: i'll admit i'm now drawing a bit of a blank on good use cases :D
+[00:15] netrealm has joined the channel
+[00:16] Chainfire: also I was wondering about disk I/O concurrency. with rotating disks the more threads you are using to access, the slower the throughput. is this scheduled somehow or internally just fire and forget ?
+[00:16] aurynn: the OS handles disk IO
+[00:17] aurynn: So, if you need more throughput, throw more spindles at it
+[00:17] aurynn: :)
+[00:17] Chainfire: orls> yeah thats too bad. Looking for an excuse to use it for "stuff". Its hard to find a matching case in your own arsenal if you lack good example use cases and such
+[00:17] orls: Chainfire: my point was more about node being a good tool within a stack, not a replacement for anythign else
+[00:18] Epeli has joined the channel
+[00:18] orls: fwiw i use it for a geoip based alternative-content thingy, with good results. Since we're piggybacking some regional analytics (read:logging to a db) node works well, can get a superfast response to the client w/out breaking page loading
+[00:19] Chainfire: orls> sure it can be, if it is strong in something your current case is weak at :)
+[00:19] orls: but i'm sure there's a more appropriate tool for that ;)
+[00:20] Chainfire: well no actually I'd consider that a good case. the aim is not to use every single tool in existance, but from your (smallish) base set of tools build the best system
+[00:20] orls: ..and the reason we can't do the geoip stuff in the java stack is because it's all behind a frontend cache
+[00:20] sechrist_ has joined the channel
+[00:20] techwraith has joined the channel
+[00:21] orls: any node 'internals' guys on?
+[00:22] ryah: orls: what's up?
+[00:22] Chainfire: how many connections a second can you serve with that geo thingy ?
+[00:23] orls: ryah: wondering what the roadmap is re. https module ; looking to implement client-certificate auth https server
+[00:24] orls: (without all that painful muckign about at the tls level ;)
+[00:24] yhahn has left the channel
+[00:24] ryah: orls: req.connection.authorized
+[00:25] ryah: req.connection.authorizationError
+[00:25] ryah: s/req/res
+[00:25] Evet has joined the channel
+[00:25] Evet has joined the channel
+[00:25] jimt has joined the channel
+[00:25] orls: ryah: huh, missed that, thks
+[00:26] ryah: res.connection.getCertificate()
+[00:26] felixge has joined the channel
+[00:26] felixge has joined the channel
+[00:26] ryah: let me know if those work
+[00:26] ryah: :)
+[00:27] firdose: omg watson
+[00:27] Chainfire has joined the channel
+[00:28] orls: ryah: looking over the docs more now, thks for the heads up.
+[00:29] orls: i'm guessing I just create http server, then call those methods straight away when handling responses?
+[00:29] orls: s/http/https
+[00:30] wilken has joined the channel
+[00:30] flippyhead_ has joined the channel
+[00:30] ryah: orls: https://gist.github.com/830658
+[00:30] dstik1 has joined the channel
+[00:31] shiawuen has joined the channel
+[00:33] orls: ryah: sorry, didn;t explain well -- i'm looking to auth client certificates making requests to *me*
+[00:33] warz has joined the channel
+[00:34] phed__ has joined the channel
+[00:34] orls: e.g. distribute self-signed client certs, use them to auth incoming requests
+[00:35] riven has joined the channel
+[00:35] riven has joined the channel
+[00:35] brianc has joined the channel
+[00:35] ryah: orls: ah
+[00:35] ryah: orls: well, same api
+[00:35] ryah: req.connection.authorized
+[00:36] ryah: you need to supply a 'ca' parameter to the server
+[00:36] ryah: in the options
+[00:36] ryah: with the cert authority which has signed the client certs
+[00:37] ryah: on the client side you can do https.get({ cert: xyz, key: abc, host: "blah.com"}, ...)
+[00:38] orls: aha...thanks, that's what i was missing
+[00:38] ryah: on the server you can also give the option  rejectUnauthorized
+[00:38] ryah: which will just reject the clients outright if they don't have an authorized cert
+[00:38] ryah: (closes the tcp connection)
+[00:39] orls: ryah: awesome, thnks -- looking through src for https now, options pass straight through to the tls socket
+[00:40] sechrist has joined the channel
+[00:41] Jaye_ has joined the channel
+[00:41] losing has joined the channel
+[00:41] orls: ryah: tks for the pointers, g'night
+[00:42] Chainfire: can someone explain to me why in a module: function MyModule() { if (false === (this instanceof MyModule)) { return new MyModule(); } }
+[00:42] Chainfire: why is the instanceof part used ?
+[00:42] tmzt: chain :)
+[00:42] Chainfire: hey hey sup tmzt :)
+[00:42] tmzt: up is love node+jade
+[00:43] unomi has joined the channel
+[00:43] Chainfire: can you help me understand this, tmzt ?
+[00:43] tmzt: probably something to do with functions being objects, and you redefining it
+[00:43] tmzt: I don't think it's a valid way to do a singleton
+[00:43] aurynn: Chainfire, it says "If 'this' isn't an instance of me, return a new MyModule instance"
+[00:43] tjholowaychuk: Chainfire: protects against Foo() instead of new Foo
+[00:44] aurynn: I am so stealing that, tjholowaychuk :)
+[00:44] Chainfire: ahhh that makes sens tjholowaychuk
+[00:44] tmzt: hmm, ok
+[00:44] Chainfire: but where would you put the init code then ?
+[00:44] tjholowaychuk: Chainfire: in the else portion of that conditional
+[00:44] Chainfire: in the if, or in the else ?
+[00:44] Chainfire: right
+[00:45] Chainfire: just making sure :)
+[00:45] tjholowaychuk: "new" is really lame
+[00:46] Chainfire: how is that ?
+[00:46] tjholowaychuk: using it isnt lame, but the fact that js has it is lame
+[00:46] Chainfire: how is that ?
+[00:46] jimt_ has joined the channel
+[00:47] tjholowaychuk: id prefer obj.clone()
+[00:47] tjholowaychuk: no constructors
+[00:47] pHcF has joined the channel
+[00:47] tjholowaychuk: obj.clone().init(whatever)
+[00:47] Chainfire: obj.clone().init(whatever) over new, hmm
+[00:47] tjholowaychuk: or some props obj.clone({ foo: 'bar' })
+[00:47] tjholowaychuk: 'new' is awkward for prototypal stuff IMO
+[00:48] tjholowaychuk: and people get confused
+[00:48] Chainfire: but
+[00:48] Chainfire: I don't see it.
+[00:48] eyesUnclouded has joined the channel
+[00:48] Chainfire: which part is confusing ?
+[00:49] tjholowaychuk: the part you were just talking about
+[00:49] firdose: i tend to use new for native types and clone for user defined as well
+[00:49] tjholowaychuk: constructors
+[00:49] tjholowaychuk: lol
+[00:49] tjholowaychuk: the language would be more pure if constructors did not exist
+[00:49] samsonjs has joined the channel
+[00:49] tmzt: ryah: will req.connection.authorized work if using a proxy like nginx, *if* I can get it to pass tls?
+[00:49] Chainfire: it'd also be lenghier
+[00:49] tjholowaychuk: meh
+[00:50] firdose: u can also define your own 'clone' to make deep or shallow copies
+[00:50] jacobolus has joined the channel
+[00:50] mikeal has joined the channel
+[00:51] Chainfire: and still, where would you put the init? defin everything as: var myObj = { var foo: bar; yawn: function() { return foo; } }; then use myObj.clone(); ?
+[00:51] Chainfire: (my js is rusty, that may not compute ;))
+[00:52] firdose: http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
+[00:52] Chainfire: if you're just going to add an init(params) to every object aren't you doing the same thing as using a constructor, really?
+[00:53] tjholowaychuk: yeah
+[00:53] tjholowaychuk: but at the language level its cleaner
+[00:53] tjholowaychuk: maybe not cleaner to use
+[00:53] aguynamedben has joined the channel
+[00:53] tjholowaychuk: but I would much prefer language purity
+[00:53] tonymilne has joined the channel
+[00:53] tjholowaychuk: but whatever haha
+[00:53] tjholowaychuk: gotta run
+[00:54] firdose: ciao
+[00:54] softdrink has joined the channel
+[00:54] Chainfire: I think that would actually confuse the difference between "namespace" or static objects and dynamic objects.
+[00:54] Chainfire: laters :)
+[00:54] firdose: thnx again for the cluster link
+[00:54] perezd has joined the channel
+[00:55] firdose: i usually follow a convention
+[00:56] firdose: such as declaring statics using JSON and instances as functions
+[00:56] firdose: whatever works
+[00:56] ryah: tmzt: it will only work if node is doing the tls negotiation
+[00:56] Chainfire: declaring statics using JSON ? example ?
+[00:56] ryah: tmzt: in nginx you'd have nginx doing it...
+[00:57] kriszyp_ has joined the channel
+[00:57] firdose: see the Module documentation
+[00:57] squeeks: dumb question of the week: can node do tls on udp4 sockets?
+[00:59] josephhitchens: we didn't lose the ability to transform a plain socket connection to secured, after already having done some cleartext back-and-forth, by negotiating TLS midstream (in 0.4) did we?  I depend on that with my smtp code.
+[01:00] jimt has joined the channel
+[01:00] dshaw has joined the channel
+[01:00] tmzt: ryah: so I'd be using a X-Authorized: header
+[01:00] tmzt: ok
+[01:01] ChrisPartridge: tjholowaychuk: are there any roadblocks for supporting https with cluster?
+[01:02] tmzt: that's actually what I'm wondering about, writing a small adapter to start a secure and non secure server and drop the relevant sockets in /var/run
+[01:02] tmzt: seems like something that could be done with cluster, then all my little spark's go away
+[01:03] tjholowaychuk: tmzt / ChrisPartridge: have not tried yet
+[01:03] tjholowaychuk: but should be fine
+[01:03] malkomalko has joined the channel
+[01:03] tjholowaychuk: and you can change the paths for all the sockets / pidfiles to /var/run etc
+[01:03] tmzt: does it make sense to keep the secure stuff on the same socket then if nginx is doing the https, I still need to make sure that login's only happen over https
+[01:04] Me1000 has joined the channel
+[01:05] ChrisPartridge: tjholowaychuk thnx
+[01:07] Jourkey has joined the channel
+[01:08] Vekz has joined the channel
+[01:08] Vekz: hey guys
+[01:08] Vekz: is there a Urlencode function in the node.js core lib?
+[01:08] tanepiper: there is one in javascript core :D
+[01:08] mscdex: encodeURI
+[01:08] Vekz: oh right!
+[01:08] Vekz: thx
+[01:08] bwinton has joined the channel
+[01:10] zomgbie has joined the channel
+[01:11] flippyhead_ has joined the channel
+[01:15] zentoooo has joined the channel
+[01:15] tpryme has joined the channel
+[01:16] tpryme has left the channel
+[01:16] zakabird has joined the channel
+[01:16] tpryme has joined the channel
+[01:17] tpryme: Anyone upgraded to the newest npm ver 0.3.0-5?
+[01:17] disq has joined the channel
+[01:17] disq has joined the channel
+[01:17] isaacs: tpryme: yeah, what's up?
+[01:17] tpryme: Having trouble npm installing/publishing with it
+[01:17] isaacs: tpryme: hm.. might have to revert the https stuff.  seems like there are still some problems with that
+[01:18] tpryme: isaacs: npm ERR! Failed PUT response undefined
+[01:18] tpryme: npm ERR! Error: ECONNRESET, Connection reset by peer
+[01:18] isaacs: tpryme: can you try this?  `npm config set registry http://registry.npmjs.org/`
+[01:18] isaacs: tpryme: if that makes it work, lemme know
+[01:18] postwait has joined the channel
+[01:18] tpryme: Cool
+[01:19] eee_c has joined the channel
+[01:19] tpryme: isaacs: That fixed it. Thanks!
+[01:19] isaacs: d'oh.
+[01:19] isaacs: ok
+[01:19] sholmes has joined the channel
+[01:19] sholmes: are there known issues with node and cygwin
+[01:19] sholmes: ?
+[01:19] isaacs: sholmes: yeah.  check the wiki page
+[01:20] ChrisPartridge: isaacs if i have an older version of npm installed, along with an older version of node. whats the best way to move up to latest npm and node? I originally compiled from source.. just recompile from latest sources?
+[01:20] sleeplessinc has joined the channel
+[01:21] isaacs: sholmes: https://github.com/ry/node/wiki/Building-node.js-on-Cygwin-(Windows)
+[01:21] hornairs has joined the channel
+[01:21] isaacs: ChrisPartridge: yeah, that's a good way to do it
+[01:21] isaacs: ChrisPartridge: there's also nave/nvm/n
+[01:21] isaacs: neco
+[01:21] isaacs: (various node version managers
+[01:22] ChrisPartridge: isaacs ill take a look, what do you recommend out of nave/nvm/neco ? or better to compile from sources in your opinion?
+[01:22] sholmes: No, I don't mean problems with installation on cygwin.
+[01:22] sholmes: I mean actual runtime problems
+[01:23] sleeplessinc has joined the channel
+[01:23] fairwinds: eesh. hard sometimes making adjustment to ansynchonous from synchronous. thought I had a problem with my bind method it was fine. my problem was attempting to collect a result in a more synchronous way.
+[01:24] dnolen has joined the channel
+[01:24] fairwinds: s / asynchronous
+[01:24] ChrisPartridge: fairwinds: you'll get over that pretty quick :-)
+[01:24] fairwinds: ChrisPartridge: got to stop thinking like a python programmer :-)
+[01:26] fizx has joined the channel
+[01:27] kawaz_air has joined the channel
+[01:27] isaacs: ChrisPartridge: I use nave.  cuz i wrote it. :)
+[01:27] sholmes: wikipedia's IE article is funny, "Removing Internet Explorer does have a number of consequences. Applications that depend on libraries installed by IE will fail to function (or malfunction)."
+[01:27] _schulte_ has joined the channel
+[01:27] isaacs: ChrisPartridge: but, really, it's not a hard problem, and they all solve it pretty well
+[01:27] isaacs: i like nave's subshell functionality.
+[01:28] sirkitree has joined the channel
+[01:28] isaacs: so npm installs inside it are isolated, which is cool.
+[01:28] ChrisPartridge: isaacs: Haha yes, just seen that - and read your comments on the bottom of the gh page, I'll give nave a shot :)
+[01:28] ChrisPartridge: oh thats cool
+[01:28] ChrisPartridge: in fact, exactly what i need
+[01:28] stynx_ has joined the channel
+[01:29] kawaz_work has joined the channel
+[01:30] isaacs: tpryme: can you `npm install npm` and then `npm config delete registry` so that you go back to the default?
+[01:30] isaacs: tpryme: it should work now
+[01:30] tpryme: isaacs: K, lemme try
+[01:30] Iszak has joined the channel
+[01:30] Iszak has joined the channel
+[01:30] kawaz_air has joined the channel
+[01:30] _schulte_: so, I have to make a *very* simple survey web page (bassicaly just a single form) and figure it is a good excuse to try out node.js, any suggestions for simple POST data parsing?
+[01:31] tpryme: isaacs: That worked.
+[01:31] tpryme: isaacs: But is it supposed to be fetching from http or https?
+[01:31] ChrisPartridge: _schulte_: give express a shot
+[01:31] skohorn has joined the channel
+[01:31] isaacs: tpryme: i'd hoped that https would work reliably now, and it was promising, but i guess there's still some ironing out to do
+[01:31] isaacs: i can't seem to reproduce it in an isolated test.
+[01:31] tpryme: isaacs: Ah, ok.
+[01:32] _schulte_: ChrisPartridge: thanks, checking it out now
+[01:33] ChrisPartridge: isaacs: should I remove my current node/npm setup before starting with nave? 
+[01:33] isaacs: ChrisPartridge: it's not necessary
+[01:33] Brent has joined the channel
+[01:33] isaacs: ChrisPartridge: if you want to overwrite it, nave can install any version with the `usemain` command.  `nave usemain latest` will install 0.4.0 in your current environment
+[01:34] ChrisPartridge: isaacs: Your too good mate!
+[01:34] isaacs: ChrisPartridge: but if you do `nave use 0.4.0`, then it''ll install it in a special folder, adn then drop you into a shell where that's "the" node.  if you then do `exit`, you'll be back to where it's not installed
+[01:34] isaacs: it's just PATH juggling, mostly
+[01:34] eyesUnclouded has joined the channel
+[01:34] isaacs: it does PATH=/path/to/nave/installs/0.4.0/bin $SHELL
+[01:35] isaacs: so that you'll see that one first
+[01:35] ChrisPartridge: Yeah, so I can pretty much use the nave shell with dev/testing new versions, and usemain <version> to update the servers "live" node version
+[01:35] Vekz: hey guys I used to use sys.puts, sys.inspect heavily for debugging and I am aware its deprecated. Is there a new node core or ECMA 5 method to print objects like sys.inspect that I am unaware of?
+[01:36] ChrisPartridge: I wish i had this weeks ago!
+[01:37] pyrony has joined the channel
+[01:37] bartt has joined the channel
+[01:37] shiawuen: Veks: require('util').inspect( obj ) ?
+[01:37] unomi has joined the channel
+[01:37] pyrony: shiawuen: where is the .dll?
+[01:37] shiawuen: http://nodejs.org/docs/v0.4.0/api/util.html
+[01:38] shiawuen: pyrony: no idea, maybe others in the list know
+[01:39] Vekz: shiawuen: Thanks that looks like it
+[01:39] jimt_ has joined the channel
+[01:40] ChrisPartridge: isaacs this would be great for automated testing on new node versions
+[01:40] jdalton has joined the channel
+[01:40] jdalton has left the channel
+[01:40] isaacs: ChrisPartridge: yeah, i use it to debug stuff in different versions
+[01:40] isaacs: since it's so easy to swap betweenthem without much extra overhead.
+[01:41] Brent: Hello, trying to build node.js getting this: /home/Brent/node/deps/v8/src/platform-cygwin.cc:778:31: no newline at end of file
+[01:41] Brent: any idea?
+[01:42] pyrony: install from aptitude
+[01:42] pyrony: oh wait, cygwin
+[01:42] pyrony: just run a vm ;>
+[01:42] ChrisPartridge: Brent: try adding a new line to the end of the file? :)
+[01:42] Brent: yea I was thinking that but does not seem like somthing I should need to do
+[01:42] pyrony: brb
+[01:43] jimmmyz2_ has joined the channel
+[01:43] ChrisPartridge: Brent: node on windows isn't the highest priority afaik
+[01:43] raidfive has joined the channel
+[01:43] kawaz_air has joined the channel
+[01:44] pyrony has joined the channel
+[01:45] pyrotechnick has joined the channel
+[01:46] jimmmyz2_: I'm trying to do a simple file tail demo, and when i run the script I'm getting this error:
+[01:46] jimmmyz2_: Error: childProcess API has changed. See doc/api.txt.
+[01:46] jimmmyz2_: but that doc doesn't exist.
+[01:46] Brent: Adding the newline worked is cranking away
+[01:46] jimmmyz2_: var tail = process.createChildProcess("tail", ["-f", filename]); // can anyone tell me whats wrong with that?
+[01:49] ChrisPartridge: Well ol' jimmy didn't stick around too long
+[01:49] jimt_ has joined the channel
+[01:49] jimmyz2 has joined the channel
+[01:49] galaxywatcher has joined the channel
+[01:49] ChrisPartridge: jimmyz2: what version of node?
+[01:50] jimmyz2: 2.5 is all i could get to compile on openbsd
+[01:50] jakehow_ has joined the channel
+[01:50] jakehow has joined the channel
+[01:50] jamund has joined the channel
+[01:51] wadey: jimmyz2: look at the "Child Processes" section here: http://nodejs.org/docs/v0.2.6/api.html
+[01:51] jimmyz2: should i work on compling 4.0 or is this something simple?
+[01:51] jimmyz2: thanks.
+[01:51] kawaz_work has joined the channel
+[01:51] ChrisPartridge: child_process.spawn should do what you require
+[01:51] flippyhead_ has joined the channel
+[01:51] jimmyz2: ah ok. 
+[01:53] sixdotsixtwosix has joined the channel
+[01:54] sixdotsixtwosix has left the channel
+[01:57] kawaz_work has joined the channel
+[01:59] ryah: ACTION waits for tests to run
+[02:00] stuross has joined the channel
+[02:00] jashkenas has joined the channel
+[02:01] stuross: anyone know if there is a mongoose room?
+[02:01] jamund has joined the channel
+[02:02] zdzolton has joined the channel
+[02:02] Lorentz: stuross: Not sure. Just ask here and maybe someone will help?
+[02:02] EyePulp: this is about as close as you'll get.  and i think they're channels on irc...
+[02:02] skohorn has joined the channel
+[02:02] piscisaureus: heh. finally got the scons toolchain=something option working for v8
+[02:03] piscisaureus: those guys should thank me, actually
+[02:03] stuross: well im trying to sort results from a find using mongoose
+[02:04] stuross: i know in mongodb you can pass a sort param with a query
+[02:04] stuross: but i cant seem to get the syntax right for mongoose
+[02:05] zdzolton: hello, anyone knowledgable in Express middleware creation here currently?
+[02:07] kawaz_work has joined the channel
+[02:07] EyePulp: stuross - have you tried the sort command directly in the mongodb cli?
+[02:08] Lorentz: Don't you call .find() on the model anyway, and can pass in sort there like mongo native client does?
+[02:09] Lorentz: Well, call sort() afterwards anyway
+[02:09] aconran___ has joined the channel
+[02:10] stuross: EyePulp - no I haven't tried sorting from the cli. its a simple test db so i assume it would work
+[02:12] MikhX has joined the channel
+[02:12] EyePulp: stuross - my typical path when I run into mongoose problems is to try and make sure the query is valid at the CLI, then try it on the node-native collection object (bypass mongoose)  with models.Foo.collection({qry},function(err,cursor){ .... });
+[02:13] stuross: EyePulp -  thanks for the advice. I'll try it on the cli first. I am trying to sort by date so maybe its sorting just not the way i want.
+[02:15] galaxywatcher has joined the channel
+[02:17] tpryme has left the channel
+[02:17] amerine has joined the channel
+[02:18] samsonjs has joined the channel
+[02:18] malkomal_ has joined the channel
+[02:18] softdrink has joined the channel
+[02:19] CIA-39: node: 03Ryan Dahl 07v0.4 * r19b4c27 10/ lib/tls.js : TLS: Make _cycle reentrant. - http://bit.ly/giP2ny
+[02:19] CIA-39: node: 03Ryan Dahl 07v0.4 * r7f78e58 10/ (2 files in 2 dirs): Move test-tls-throttle to pummel - http://bit.ly/e3hmd2
+[02:19] beta_ has joined the channel
+[02:21] bingomanatee has joined the channel
+[02:22] kordless has joined the channel
+[02:22] mjr_: isaacs: trouble publishing to npm today.  Surprising to you?
+[02:22] mjr_: https://gist.github.com/830817
+[02:23] mjr_: I've tried both the v0.4 branch and master.
+[02:23] bobbillman has joined the channel
+[02:25] ChrisPartridge: mjr_: he was talkinga bout issues with ssl before
+[02:25] ChrisPartridge: could be related
+[02:25] mjr_: good ole ssl.
+[02:25] mjr_: npm's old and dear friend
+[02:25] bronson has joined the channel
+[02:25] ChrisPartridge: ACTION laughs
+[02:27] bronson: buffers are filled with uninitialized data?
+[02:27] bronson: (new Buffer(1024)).toString()
+[02:27] bronson: is this a potential security issue?
+[02:27] jashkenas has joined the channel
+[02:28] tfe_ has joined the channel
+[02:28] xandrews has joined the channel
+[02:28] mjr_: isaacs: setting the registry var to the http version made my publish work.  Something is still sad in HTTPS land.
+[02:29] mjr_: bronson: yes, it is uninitialized data.
+[02:30] mjr_: The length property is the byte length.  If you want a string back out of a buffer, it is often necessary to make a slice.
+[02:30] m14t has joined the channel
+[02:31] luke` has joined the channel
+[02:31] mjr_: bronson: > a = new Buffer(10); a[0] = 72, a[1] = 105; a.slice(0,2).toString();
+[02:31] mjr_: 'Hi'
+[02:31] davidascher has joined the channel
+[02:31] bronson: mjr_, very true
+[02:32] bronson: but that's a potential information leak, no?
+[02:32] mjr_: is it?
+[02:32] bronson: assuming the programmer screws up
+[02:32] bronson: which he always does.  :)
+[02:32] flippyhead_ has joined the channel
+[02:32] mjr_: Buffers are for really low level binary stuff.  They require care for sure.
+[02:33] bronson: right on.
+[02:33] bronson: I'm glad Node isn't spending a bunch of time uselessly bzeroing memory blocks.
+[02:34] vyvea has joined the channel
+[02:34] pengwynn has joined the channel
+[02:34] bronson: otoh, this might merit a mention in the docs.  I find it surprising.
+[02:35] mjr_: That's probably true.
+[02:36] yhahn has joined the channel
+[02:36] admc has joined the channel
+[02:37] stuross: EyePulp: In case you are interested I found the problem. you need to pass options as the 3rd param like: Model.find({email: email},[], {'sort': {'time': -1}}, function(err,users)
+[02:37] jashkenas has joined the channel
+[02:37] bronson: mjr_, the best way to submit doc changes is via github pull request?
+[02:38] mjr_: I'm not sure.  I guess there's a separate doc effort being coordinated by micheil.
+[02:38] mjr_: At one time, I sent in a ton of doc patches, but I haven't done so in quite a while.
+[02:39] blueadept has joined the channel
+[02:40] bronson: guess I'll wait for that to shake out before submitting such trivial patches.
+[02:40] pyrony: has anyone implemented nodejs in php yet?
+[02:41] bronson: pyrony, ???
+[02:41] slickplaid: hmm... what package is named 'mu' that shoutr depends on? https://github.com/eschnou/shoutr
+[02:41] delinka: I'm not even sure how that would make sense, pyrony
+[02:41] pyrony: no?
+[02:41] pyrony_ has joined the channel
+[02:42] pyrony_ has left the channel
+[02:42] slickplaid: no, node.js hasn't been implemented in php heh
+[02:42] delinka: that is to say, if you can explain how that would work, someone can probably tell you if it makes sense  :)
+[02:43] mynyml has joined the channel
+[02:44] ChrisPartridge: it doesn't make sense
+[02:45] pyrony: well
+[02:45] amerine_ has joined the channel
+[02:45] pyrony: i want it to have the !# in the url
+[02:45] pyrony: so i can have my moustache included as a JS
+[02:45] pyrony: but i only have a php webserve
+[02:46] stuross: pyrony: trolling?
+[02:46] bronson: pyrony, node is a network server...  picture it like apache.
+[02:46] bronson: Why is process.stdin paused by default?
+[02:46] pyrony: stuross no
+[02:47] pyrony: i just want google to be able to index my /rather extreme/ javascript website
+[02:47] stuross: pyrony: what bronson said
+[02:47] pyrony: so there can't be an apache module to run a node server?
+[02:47] bronson: pyrony, it's a standalone executable.
+[02:48] jamund has joined the channel
+[02:48] jesusabdullah: There's probably an evented php thingy around somewhere
+[02:48] bronson: and really, !# has very little to do with node.
+[02:48] jesusabdullah: !# ?
+[02:49] bronson: er #!
+[02:49] jesusabdullah: #!/usr/bin/env node ?
+[02:49] jesusabdullah: or is this a different hashbang?
+[02:49] bronson: since it's about spidering js, I assume he's talking about the google thing.
+[02:50] jesusabdullah: What's the google thing?
+[02:50] iszak has joined the channel
+[02:50] iszak has joined the channel
+[02:50] pyrony: !# is so google can index your site
+[02:50] pyrony: it lets you serve pages that were minted server-side to special folks like google and bin
+[02:51] jpld has joined the channel
+[02:51] jpld has joined the channel
+[02:51] kiddphunk has joined the channel
+[02:51] bentruyman has joined the channel
+[02:51] Aria: Different hashbang, jesusabdullah. It's the Google "here, your app is broken and you don't have pushState() , use this url and we'll take the #! out of your links"
+[02:51] kiddphunk has joined the channel
+[02:52] pyrony: Area: and generate the pages for you*
+[02:52] pt_tr has joined the channel
+[02:52] kiddphunk_ has joined the channel
+[02:52] cainus: http://www.tbray.org/ongoing/When/201x/2011/02/09/Hash-Blecch
+[02:56] davidascher has joined the channel
+[02:57] dnolen_ has joined the channel
+[02:57] mattly has joined the channel
+[02:57] omygawshkenas has joined the channel
+[03:02] skm has joined the channel
+[03:04] jacobolus has joined the channel
+[03:05] pyrony: have u guys seen this
+[03:05] pyrony: http://andyet.net/blog/2011/feb/15/re-using-backbonejs-models-on-the-server-with-node/
+[03:06] pyrony: nice writeup.
+[03:09] roberthahn has joined the channel
+[03:09] roberthahn: hey hey, everyone!
+[03:09] piscisaureus: ryah: we need a try branch to send stuff to the buildbot
+[03:10] roberthahn: I've got a question about using express - how do I configure it to accept connections on wildcard domains (ie: *.example.com)?
+[03:12] xandrews has joined the channel
+[03:13] flippyhead_ has joined the channel
+[03:13] ChrisPartridge: roberthahn: first google result: http://groups.google.com/group/express-js/browse_thread/thread/31da44ae78aae34a
+[03:13] xla has joined the channel
+[03:14] roberthahn: ChrisPartridge: thx - i used  "node.js express wildcard domains" and that link didn't show up…
+[03:15] galaxywatcher has joined the channel
+[03:15] pyrony: can i follow any of u on twitter?
+[03:16] flippyhead_ has joined the channel
+[03:19] skm has joined the channel
+[03:23] andrewfff has joined the channel
+[03:23] skm has joined the channel
+[03:26] mikeal has joined the channel
+[03:26] piscisaureus: ryah: ping
+[03:28] roberthahn: hmm, it's not obvious to me how i'd wire connect.vhosts to express -- and google's not helping out much; any tips (or links to related examples?)
+[03:29] softdrink has joined the channel
+[03:30] marcello3d has joined the channel
+[03:30] marcello3d: anyone here know if it's possible to get more useful error information when parsing js with eval?
+[03:31] pyrotechnick has left the channel
+[03:32] shiawuen: roberthahn: i never try it before but there is example on connect github https://github.com/senchalabs/connect/blob/master/examples/vhost/server.js
+[03:32] jashkenas: marcello3d: the usual rule is to not parse JS with eval.
+[03:33] marcello3d: well, jade is doing it
+[03:33] marcello3d: and it's generating bad JS
+[03:33] marcello3d: and the error is not very useful
+[03:33] pyrony: why can't javascript be more like pythong?
+[03:33] marcello3d: SyntaxError: Jade:undefined
+[03:33] marcello3d: <my jade file>
+[03:33] marcello3d: Unexpected token (
+[03:33] marcello3d:     at Object.render (/usr/local/lib/node/.npm/jade/0.6.3/package/lib/jade.js:269:13)
+[03:33] marcello3d:     at ServerResponse.render (/usr/local/lib/node/.npm/express/1.0.7/package/lib/express/view.js:334:22)
+[03:34] roberthahn: thanks, shiawuen; i noticed that express re-exports connect, so i theorize that i could crib from those examples, replacing connect with 'express' (assuming I have a line: var express = require('express');)
+[03:35] dannycoates has joined the channel
+[03:36] shiawuen: roberthahn: not sure if it works though :D
+[03:36] seivan: Ehm, sorry to ask, you probably get this a 100 times a day, but regarding the bechmarking between Erlang and Node for websockets. Apparently Node was leaking memory in the json parser (or something?) has that been fixed?
+[03:36] samsonjs has joined the channel
+[03:37] roberthahn: shiawuen:  yep yep, at least you gave me something to work with. thanks again
+[03:38] pyrony: seivan: link pls?
+[03:38] seivan: http://blog.mysyncpad.com/post/2073441622/node-js-vs-erlang-syncpads-experience
+[03:38] kiddphunk has joined the channel
+[03:40] dnyy has joined the channel
+[03:43] mikeal: did anyone document the fastbuffer api for C?
+[03:43] mikeal: er C++
+[03:43] dannycoates: does anyone know the best way to get in touch with one of the nodeconf organizers?
+[03:45] pyrony: dannycoates: probably email
+[03:47] dannycoates: pyrony: i don't see any contact info on nodeconf.com, do you know of one?
+[03:47] mikeal: i'm the organizer for nodeconf
+[03:47] mikeal: :)
+[03:48] mikeal: what's up
+[03:48] iszak: mikeal, can we get a live stream?
+[03:48] mikeal: no
+[03:48] mikeal: :)
+[03:48] iszak: Why?
+[03:48] dannycoates: i submitted a proposal, is there a way to edit it?
+[03:48] iszak: node.js isn't closed source, why should nodeconf be any different.
+[03:49] mikeal: dannycoates: unfortunately no, but if you send me the changes you want to make i can edit it
+[03:49] mikeal: it's not a matter of closed vs. open
+[03:49] mikeal: it's a matter of logistics
+[03:49] iszak: mikeal, elaborate.
+[03:49] mikeal: we're having an in person meetup to build community
+[03:49] dannycoates: mikeal: great! thanks
+[03:50] mikeal: i've been in open source a long time
+[03:50] mikeal: in person meetups are important 
+[03:50] mikeal: we record the talks
+[03:50] mikeal: so that we can release them later and everyone gets a lot of value out of them
+[03:51] mikeal: but it's way too hard to handle the logistiics of a real event and keeping up a website with a live stream
+[03:51] arpegius has joined the channel
+[03:51] dannycoates: mikeal: any idea of how many talks there will be?
+[03:51] mikeal: we contract the recording to third party company so that it's done right
+[03:51] iszak: mikeal, ustream?
+[03:51] iszak: some people are just happy to have a stream.
+[03:51] mikeal: iszak: dude, the event doesn't even have internet, I have to pay a company to come in and provide that
+[03:51] iszak: oh whoa, that blows.
+[03:51] mikeal: and it's going to be stressed with the traffic of 200 geeks with laptops
+[03:52] mikeal: i'm not also going to try and stream two video feeds out 
+[03:52] iszak: then scrap live and stream and just record it and then later release it
+[03:52] skm has joined the channel
+[03:52] mikeal: iszak: we're doing that
+[03:52] iszak: great.
+[03:52] mikeal: just like JSConf the videos will get released later
+[03:52] marcello3d: lol
+[03:52] mikeal: it takes time to edit them properly
+[03:52] mikeal: but yes, eventually all the videos will go up
+[03:53] iszak: I hope so.
+[03:53] mikeal: dannycoates: it's a one day event and there is a cap of 30 minutes on all talks
+[03:53] mikeal: there are two tracks
+[03:53] mikeal: so we're looking at between 24 − 32 talks depending on how we break up the time
+[03:53] iszak: have we got a topic list yet?
+[03:53] mikeal: now, only the track A talks will get announced long before the conference
+[03:54] Vertice has joined the channel
+[03:54] mikeal: track B will be made up of talks by people who are already attending and we'll decide about a week before who is accepted
+[03:54] Jourkey: just like this channel is for node.js, is there a design channel?
+[03:54] mikeal: iszak: call for proposals is still out
+[03:54] Jourkey: i rly need some design advice
+[03:54] mikeal: you can apply to speak :)
+[03:54] iszak: mikeal, How many people are attending?
+[03:54] mikeal: we have a hard limit of 200
+[03:54] iszak: soft limit?
+[03:54] mikeal: we'll probably fuck up and break that, but it's basically only 200
+[03:55] iszak: I would talk but y'know, I don't live in USA and all that.
+[03:55] mikeal: submit a tlak tho
+[03:55] mikeal: http://www.nodeconf.com/#/proposal
+[03:55] mikeal: track A speakers are flown in and put up in a hotel
+[03:55] iszak: Wow, you guys are really going all out on this.
+[03:55] iszak: That's good.
+[03:56] tlrobinson_ has joined the channel
+[03:56] mikeal: JSConf does it too
+[03:56] marcello3d: sounds fun
+[03:56] samsonjs has joined the channel
+[03:56] mikeal: we want quality talks and speakers
+[03:56] mikeal: and we're willing to go all out for that
+[03:56] admc has joined the channel
+[03:56] marcello3d: who is sponsoring it?
+[03:56] iszak: Sounds like it's going to be amazing.
+[03:56] ChrisPartridge: mikeal: where is nodeconf?
+[03:56] Ond: Portland
+[03:56] mikeal: the costs are high but we're doing good on sponsors and we sold all our tickets in like 4 minutes
+[03:56] iszak: that's crazy.
+[03:56] mikeal: current confirmed sponsors are Yammer and &yet
+[03:56] iszak: but I suppose there are only 200
+[03:57] mikeal: we have invoices out for many more and as soon as it's in the bank they'll be announced :)
+[03:57] iszak: Never heard of either of them.
+[03:57] marcello3d: portland is so far away :)
+[03:57] Ond: Portland is a five minute drive
+[03:57] iszak: 20 hour flight from where I live.
+[03:57] mikeal: current proposals 
+[03:57] mikeal: http://www.nodeconf.com/proposals.html
+[03:58] mikeal: i love creationix's proposal
+[03:58] mikeal: hit render http://www.nodeconf.com/#/proposal/0379dbdaef29b1c0fbf034215400125c
+[03:58] mikeal: then move your mouse around
+[03:58] pyrony: when is nodeconf coming to san francisco?
+[03:58] seivan: ehm
+[03:58] sholmes: what's nodeconf?
+[03:59] mikeal: http://www.nodeconf.com/
+[03:59] mikeal: pyrony: never :)
+[03:59] sholmes: Hey it's on my bday!
+[04:00] mikeal: i live in the bay area, san francisco doesn't need any more geek events
+[04:00] mikeal: destination conferences should not be in SF
+[04:00] sholmes: parteh in oregon, baby!
+[04:00] seivan: Is there a Node library that by HTTP requests sent messages
+[04:00] seivan: ops
+[04:00] mikeal: you also get all the people who come up on the Caltrain for the conference and then go home after and don't have fun or have any interest in being a part of the community, which is the entire point of the conference
+[04:00] softdrink1 has joined the channel
+[04:00] mikeal: seivan: elaborate?
+[04:01] seivan: What I mean is I need a way to take http request and send a message to a certain client
+[04:01] MikeMakesIt has joined the channel
+[04:01] beawesomeinstead has joined the channel
+[04:01] seivan: eh
+[04:01] seivan: I can't.. really.. god damn
+[04:01] pyrony: hey mikeal why rn't u using nodejs to serve up the nodeconf website?
+[04:01] pyrony: seems kinda tragic
+[04:01] mikeal: because it's too damn simple :)
+[04:01] seivan: Basically I want to do; http://pusherapp.com/ with a HTTP call send a message to a certain "channel" that a client is subscribing to
+[04:01] mikeal: it's a couchapp, because it doesn't need anything more than that
+[04:01] ChrisPartridge: ouch, just under 2K to get to Portland from here
+[04:01] pyrony: couch ...bleh
+[04:02] mikeal: yeah, couch is just too simple and useful :)
+[04:02] pyrony: that's good
+[04:02] seivan: http://groups.google.com/group/nodejs/browse_thread/thread/03c87f974b5cf30a/d1c6a106f110e656?#d1c6a106f110e656
+[04:02] pyrony: they picked a horrid name tho
+[04:02] davidascher has joined the channel
+[04:02] mikeal: no way, it's a great name if you want to encourage subprojects
+[04:03] mikeal: Futon, Lounge, Sofa, Lawnchair
+[04:03] mikeal: it goes on and on
+[04:03] ajnasz has joined the channel
+[04:03] pyrony: might as well call it IKEA
+[04:03] marcello3d: yea and if you needed a control library for couch you could call it crouch
+[04:04] pyrony: mostly im turned off to it b/c at a conference i went to the couchedb dev who spoke was badmouthing mongo
+[04:04] pyrony: asshole
+[04:04] marcello3d: do you use mongodb?
+[04:04] pyrony: when it is the suitable tool
+[04:04] sholmes: when's the next conference, anyone know yet?
+[04:05] iszak: I demand to know what's going on with mongodb?
+[04:05] iszak: Why is everyone jumping on this bang wagon.
+[04:05] pyrony: mongodb is rockin'
+[04:05] pyrony: for some stuff.
+[04:05] marcello3d: yea it's pretty chill
+[04:05] iszak: I like to be able to do transactions.
+[04:05] pyrony: it's permissions suck tho
+[04:05] iszak: and then roll back if it screws up
+[04:05] strmpnk has joined the channel
+[04:05] pyrony: yeah well then
+[04:05] marcello3d: transactions don't scale
+[04:05] pyrony: u should prboly be using mysql or pgsql
+[04:05] mikeal: that speakers was probably me :)
+[04:06] pyrony: or pay oracle a lot
+[04:06] iszak: it seems a lot of people use MongoDB when MySQL would do in a lot of case.
+[04:06] cloudhead: mongo is terrible...
+[04:06] pyrony: mikeal: u speak in sF?
+[04:06] pyrony: iszak: you get some stuff for free w/ mongo that mysql won't give
+[04:06] pyrony: like auto-sharding
+[04:06] mikeal: transactions that lock a state for a long period of time don't scale well
+[04:06] losing has joined the channel
+[04:06] mikeal: but having an insert be transaction scales fine
+[04:06] iszak: pyrony, so? one thing.
+[04:06] pyrony: and the ability to swap in more nodes when u need more performance
+[04:06] mikeal: pyrony: i live in Oakland
+[04:06] pyrony: and it will automatically handle a lot of shit for u
+[04:07] pyrony: did u speak a few weeks ago?
+[04:07] mikeal: and i spoke about couchdb last year all over the US and even in Berlin
+[04:07] mikeal: at a little start up Splurk
+[04:07] marcello3d: does anyone here use node.js as a replacement for lighttpd/nginx?
+[04:07] mikeal: i spoke a few weeks ago at that
+[04:07] iszak: marcello3d, it's possible but I wouldn't recommend it.
+[04:08] marcello3d: why not?
+[04:08] derferman has joined the channel
+[04:08] iszak: because it's something that's general purpose vs. something that's very specific in what it does
+[04:08] pyrony: so maybe it was u
+[04:08] iszak: of coures the specific thing would be better.
+[04:08] pyrony: so maybe you can resolve my qualms
+[04:08] mikeal: pyrony: where did you see someone speak a few weeks ago?
+[04:08] zorzar_ has joined the channel
+[04:08] pyrony: and btw, if u wanna be a real pro
+[04:08] pyrony: don't badmouth the competition
+[04:08] pyrony: it just puts u at a low level
+[04:08] mikeal: mongodb is very specific in what it's good at, they just try to claim they are good at a lot of use cases they don't do well
+[04:09] marcello3d: same with writing 'u' instead of 'you'
+[04:09] iszak: what are we on about?
+[04:09] sechrist has joined the channel
+[04:09] mikeal: they aren't really competition 
+[04:09] mikeal: couchdb isn't trying to be mysql
+[04:09] pyrony: yeah well marcello3d i don;t really give a fuck
+[04:09] pyrony: :)
+[04:09] mikeal: neither is redis
+[04:09] marcello3d: just saying.
+[04:09] marcello3d: isn't couchdb slow as shit?
+[04:09] marcello3d: that's all I've heard about it
+[04:09] mikeal: mongodb is trying to be mysql
+[04:09] pyrony: couchdb is nosql right?
+[04:09] mikeal: and they are a pretty shitty mysql 
+[04:09] pyrony: marcello3d: no couchedb was written in c++ for speed
+[04:09] mikeal: i mean, postgres is fine
+[04:10] pyrony: nosql != relational db
+[04:10] marcello3d: I thought it was written in erlang
+[04:10] mikeal: umn all of you are wrong
+[04:10] mikeal: CouchDB is in erlang
+[04:10] iszak: I think unless you've got a specific situation that needs mongodb/couchdb/etc why even use it?
+[04:10] pyrony: o i was misinformed
+[04:10] mikeal: the interface is HTTP and JavaScript
+[04:10] Ond: couche`
+[04:10] pyrony: iszak: don't
+[04:10] pyrony: but if you need it to scale big
+[04:10] marcello3d: pretty sure couchdb wasn't designed for high performance
+[04:10] iszak: MySQL can scale.
+[04:10] pyrony: then it /might/ be worth it, but it's no silver bullet
+[04:10] mikeal: name someone who is using mongodb in "big scale"
+[04:10] cloudhead: mongo db lied to its users, it deserves to be badmouthed
+[04:10] mikeal: seriously
+[04:10] marcello3d: it was designed for high robustness/"reliability"
+[04:10] mikeal: no
+[04:10] pyrony: nobody says it can't scale iszak
+[04:10] marcello3d: mikeal: etsy
+[04:11] pyrony: but it gets pretty fuckin messy
+[04:11] mikeal: not as their main datastore
+[04:11] marcello3d: foursquare is
+[04:11] mikeal: come on
+[04:11] mikeal: primary datastore
+[04:11] marcello3d: yes
+[04:11] iszak: pyrony, yeah so really if MySQL had it baked in, it'd basically own MongoDB.
+[04:11] marcello3d: foursquare does
+[04:11] mikeal: yeah, and it failed epicly :)
+[04:11] pyrony: mikeal: twitter
+[04:11] pyrony: mikeal: rockyou
+[04:11] marcello3d: http://www.mongodb.org/display/DOCS/Production+Deployments
+[04:11] marcello3d: go read there
+[04:11] marcello3d: they explain how it's used everywhere
+[04:11] Ond: That list disturbs me.
+[04:11] mikeal: twitter isn't using them as their primary
+[04:11] pyrony: 4sq
+[04:11] ajnasz has joined the channel
+[04:11] jesusabdullah: Not fans of mongo?
+[04:11] mikeal: yeah, that is a list of logos of people who are using it for caching or analytics
+[04:11] jesusabdullah: I'm actually mildly surprised
+[04:11] pyrony: apparently not
+[04:12] marcello3d: well
+[04:12] mikeal: 4sq is using it as a primary datastore
+[04:12] mikeal: so is learnboost
+[04:12] mikeal: that's all i know of 
+[04:12] marcello3d: I don't like the mongo driver on node.js
+[04:12] mikeal: hardly "big scale"
+[04:12] iszak: jesusabdullah, I have no problem with MongoDB, I just dislike how everyone is using MongoDB without any special requirements.
+[04:12] pyrony: is couch directly competing w/ mongo?
+[04:12] mikeal: nothing that postgres couldn't handle in it's sleep
+[04:12] mikeal: the BBC using CouchDB as their primary datastore
+[04:12] jesusabdullah: I wouldn't think so, pyrony
+[04:12] cloudhead: no, couch is durable, mongo is not
+[04:12] pyrony: lol
+[04:13] mikeal: Canonical is using CouchDB for all UbuntuOne users, that's over a million users and over 100K replications requests a minute
+[04:13] iszak: Proof or it didn't happen cloudhead.
+[04:13] marcello3d: it sounds like etsy is using it as their primary store
+[04:13] marcello3d: where are you reading otherwise?
+[04:13] pyrony: what is ubuntuone?
+[04:13] jesusabdullah: auugh, this compilation is raping my computer
+[04:13] mikeal: marcello3d: well, the C mongodb drive won't work in node because it's all blocking IO
+[04:13] cloudhead: iszak: uh, it's a design choice the made
+[04:13] marcello3d: mikeal: how much of that is reads vs writes
+[04:13] cloudhead: they*
+[04:13] marcello3d: mikeal: so? the java driver isn't c and it's great
+[04:14] ChrisPartridge: jesusabdullah: compiling 0.4.0 ?
+[04:14] mikeal: pyrony: every Ubuntu user for a year and a half has a couchdb on their desktop and all their info is synced between computers using a couchdb in the cloud as a sync point, that's UbuntuOne
+[04:14] iszak: we need a build bot.
+[04:14] marcello3d: mikeal: and couchdb is perfect for that
+[04:14] mikeal: it's designed for offline replication
+[04:14] marcello3d: but it's definitely a special purpose database
+[04:14] pyrony: does couchdb have commercial support like mongo?
+[04:14] marcello3d: exactly
+[04:14] mikeal: i wouldn't call it special purpose, but i wouldn't call it general purpose either
+[04:15] mikeal: it's flexible, but it's not postgres
+[04:15] jesusabdullah: ChrisPartridge: Naw, scipy. Completely unrelated to node tbh, but I like to bitch.
+[04:15] iszak: mikeal, you love your postgres.
+[04:15] pyrony: ?
+[04:15] jesusabdullah: I should try compiling 0.4.0 though
+[04:15] mikeal: i don't even use postgres much
+[04:15] ChrisPartridge: jesusabdullah: ah ok, i compiled 0.4.0 earlier and it just seemed to kill my xen server a little more than usual
+[04:15] mikeal: it just works
+[04:15] mikeal: and scales
+[04:15] mikeal: and did all this shit that you're talking about 10 years ago
+[04:16] mikeal: it's the kitchen sink
+[04:16] mikeal: for real
+[04:16] pyrony: mikeal: does couchdb have commercial support like mongo?
+[04:16] mikeal: couchone.com
+[04:16] iszak: pyrony, I bet you use windows.
+[04:16] marcello3d: doesn't load
+[04:16] pyrony: i use a lot of operating systems 
+[04:16] marcello3d: wow, they don't support no-www, lol
+[04:17] iszak: pyrony, primary?
+[04:17] pyrony: uh
+[04:17] marcello3d: *goes back to work*
+[04:17] pyrony: macbook atm
+[04:17] marcello3d: oooh
+[04:17] googol has joined the channel
+[04:17] marcello3d: a macbook that prints money
+[04:17] marcello3d: I want one of those :D
+[04:17] iszak: that explains everything.
+[04:17] jesusabdullah: ChrisPartridge: I see. Interesting; Normally, node compiles don't take too long for me
+[04:18] pyrony: i have like 4 different computers atm
+[04:18] marcello3d: he might be running windows on his macbook though
+[04:18] pyrony: what do u use isk?
+[04:18] marcello3d: or BeOS
+[04:18] iszak: pyrony, I have one computer, three monitors. power user ftw.
+[04:18] hij1nx has joined the channel
+[04:18] pyrony: who gives a fuck anyones
+[04:18] pyrony: anyways*
+[04:18] marcello3d: you guys should get a room
+[04:18] pyrony: ; p
+[04:18] pyrony: bbl dinner
+[04:18] pyrony: grouchy couch
+[04:18] marcello3d: stop whining about your databases and make cool shit with them
+[04:18] iszak: good.
+[04:19] jesusabdullah: I'm gonna whine about databases I don't use!
+[04:19] jesusabdullah: oh man openDAP is horrible!
+[04:19] marcello3d: goddamn microsoft access
+[04:19] jesusabdullah: My favorite database is MS Excel!
+[04:20] Ond: Database? Is that similar to Microsoft?
+[04:21] marcello3d: it's a kind of internet I think
+[04:21] Ond: Gotcha
+[04:21] samcday_: My favourite database is CSV.
+[04:21] marcello3d: version 2.0 I think
+[04:21] marcello3d: you have to install it though
+[04:21] brapse has joined the channel
+[04:21] iszak: my favourite database are punch cards.
+[04:21] samcday_: lmao
+[04:21] Aria: Win!
+[04:22] jeromegn: what's a good workflow when using coffeescript with node.js?
+[04:22] fairwinds: mikeal: hey
+[04:22] aurynn: My favourite database is a leather-bound ledger.
+[04:22] Ond: ACTION recalls flipping through an index of library cards to find the location of a book
+[04:22] fairwinds: mikeal: was really wondering what membase is bringing to couch
+[04:23] marcello3d: ooh
+[04:23] marcello3d: guestbooks
+[04:23] marcello3d: remember those
+[04:23] jesusabdullah: Actually, truth be told, I use csv's more often than not. That and json. But yeah, flat files are fine for small science-y things
+[04:23] jesusabdullah: I've also used pkrumins' supermarket a few times. It's a nice, idiot-proof api imo
+[04:23] marcello3d: you should try the deli
+[04:24] cloudhea has joined the channel
+[04:24] howardr has joined the channel
+[04:24] davidascher has joined the channel
+[04:24] howardr has joined the channel
+[04:25] jesusabdullah: :D
+[04:25] jesusabdullah: Is nstore useable these days?
+[04:27] piscisaureus: ryah: still not here/
+[04:27] tmzt: would a database in a node worker make sense, using the v8 engine for queries?
+[04:27] bartt has joined the channel
+[04:27] marcello3d: probably not
+[04:28] mikeal: fairwinds: hey
+[04:29] mikeal: im memory caching optimizations
+[04:29] razvandimescu has joined the channel
+[04:30] sivy has joined the channel
+[04:30] fairwinds: mikeal: with the announcements I read it looked like there might be some new way to run with a large central data store and communicate replicate with subsets of the store as a db on any machine
+[04:31] Aria: tmzt: I'd probably use it!
+[04:32] Ond: Alfred.js?
+[04:32] EyePulp has joined the channel
+[04:33] mikeal: yeah, there is also some sharding and datacenter management stuff
+[04:33] eee_c has joined the channel
+[04:33] fairwinds: mikeal: at this point replicating with a number of small dbs but would rather just run on a single clustered db for everything. 
+[04:34] luke` has joined the channel
+[04:34] jesusabdullah: Am I the only one that hates messy svn repos?
+[04:34] chrischris has joined the channel
+[04:34] mikeal: well, the replicating with smaller dbs is still better if you are taking those smaller dbs offline for a uesr
+[04:34] mikeal: like replicating to mobile
+[04:34] jesusabdullah: I like being able to install stuff from source, but man, when people don't have their shit together on the repo and the only build-able source is what you can get from their tarballs... frickin' lame >_<
+[04:35] pyrony: btw mikeal: 100K transactions/sec is nothing
+[04:35] fairwinds: mikeal: yeah, what is progress with iphone, will it ever a happen
+[04:35] pyrony: how many nodes to achieve that?
+[04:36] mikeal: fairwinds: waiting on apple
+[04:36] mikeal: it's been ported
+[04:36] mikeal: just waiting on approval
+[04:36] fairwinds: mikeal: oh wow, awesome
+[04:36] fairwinds: mikeal: now if we could only get node on iphone it would be sweet :-)
+[04:37] pyrony: mikeal conveniently ignores
+[04:37] mikeal: pyrony: mongodb doesn't have a response for writes, so their numbers are bullshit
+[04:37] mikeal: testing how much you can write to a socket is stupid
+[04:37] pyrony: im not talking about mongo
+[04:37] pyrony: im just asking questions
+[04:37] pyrony: u fail to realize that im not married to mongo
+[04:37] tmzt: Aria: I don't get why you want to do data transfers over a socket with a protocol like redis or mongo use
+[04:37] jacobolus has joined the channel
+[04:38] mikeal: 100K writes a second is pretty fast when writing to disc
+[04:38] sleeplessinc has joined the channel
+[04:38] mikeal: i haven't ever seen anyone actually do that
+[04:38] mikeal: who is writing to disc
+[04:38] pyrony: so how many couch nodes?
+[04:38] robotarmy has joined the channel
+[04:38] pyrony: i have a cluster that does 160K
+[04:38] pyrony: to disk.
+[04:38] pyrony: just wondering how many nodes it took for u to get there w/ couch
+[04:39] Aria: tmzt: Only for multiprocess access. But often, I only need one -- so in process makes sense!
+[04:39] fairwinds: mikeal: i have some stuff for iphone currently and really pumped about getting couch there. is there any sort of beta I can try?
+[04:40] mikeal: once there is you'll know :)
+[04:40] fairwinds: cool, thanks
+[04:40] mikeal: pyrony: vanilla couchdb has no clustering
+[04:40] mikeal: you need BigCouch
+[04:40] pyrony: okay
+[04:40] mikeal: and the BBC wrote their own thing
+[04:40] mikeal: so you'd have to ask the cloudant guys
+[04:41] mikeal: they must do that much
+[04:41] pyrony: so u throw numbers around
+[04:41] pyrony: without knowing what is driving it?
+[04:41] pyrony: it's okay if you do, just be real.
+[04:41] mikeal: i said 100K replications requests a minute
+[04:41] mikeal: go and look
+[04:41] pyrony: o
+[04:41] mikeal: that's against a single box with 4 cores
+[04:42] mikeal: that has over a million databases on it
+[04:42] tmzt: does Ubuntu have a iPhone client by any chance?
+[04:42] aurynn: what?
+[04:42] iszak: tmzt, wrong channel?
+[04:43] tmzt: iszak: UbuntuOne
+[04:43] pyrony: lol tmzt
+[04:43] tmzt: no, I think it's on topic
+[04:43] samsonjs has joined the channel
+[04:43] pyrony: not afaik tmzt
+[04:43] iszak: I don't like ubuntu one, never will use it
+[04:43] pyrony: is: ok
+[04:44] fairwinds: mikeal: your request is very good. I am making good use of it
+[04:44] tmzt: how do you think either a 256m xen instance (what I have now) or aws either the free instance or small would hold up with mongo, or just use their database (more work but maybe worth it)
+[04:44] mikeal: fairwinds: thanks, working on 2.0 now
+[04:44] mikeal: found a good bug in node core with it
+[04:45] tmzt: I mean does anybody have experience with this, like number of simultaneous users, etc.
+[04:45] pyrony: tmzt: guaranteed to suck
+[04:45] pyrony: mongo is a ram hog
+[04:45] tmzt: on the server side?
+[04:45] fairwinds: mikeal: wow. how bad is the bug?
+[04:45] pyrony: on my ubuntu vm w/ 512mb of ram it swamps it once i load up a few million user records
+[04:45] tmzt: lovely, I still have no idea how big my datasets are even going to be
+[04:46] pyrony: tmzt: figure that out first.
+[04:46] tmzt: every feature in the application will add more data ontop of the basic user information
+[04:47] tmzt: I pretty much no how big that is going to be, I also have the url alias stuff which is tiny and might just get moved to redis (at least as a cache)
+[04:48] pyrony: or just put it in sqlite
+[04:48] pyrony: (for small shit)
+[04:49] pyrony: it's 2011
+[04:49] pyrony: stop using redis
+[04:49] Aria: Why?
+[04:49] pyrony: it fits some use cases
+[04:49] Aria: Atomic ops for the win!
+[04:49] pyrony: but you have to be really careful
+[04:49] pyrony: remember it's a fukn caching layer, not a good place to store persistent data
+[04:50] tmzt: is there a connect middleware that just sets a req setting on a vhost (or other header maybe)
+[04:51] tmzt: I'm looking at the vhost middleware and it looks like a lot of duplication
+[04:51] Aria: Hm. Not that I'm aware of, but that's so trivial...
+[04:52] pyrony: tmzt maybe u should just use php
+[04:52] pyrony: or asp
+[04:53] tmzt: why?
+[04:54] andrewfff has joined the channel
+[04:55] pyrony: well if u use php then u can just use apache w/ vhosts
+[04:55] pyrony: ; >
+[04:55] yozgrahame has joined the channel
+[04:55] tmzt: Aria: I haven't written one yet but if I have to I will, it's just a question of using something that exists
+[04:55] pyrony: </snark>
+[04:55] aurynn: nginx with vhosts! :)
+[04:55] tmzt: I'm using nginx with vhosts, that's not the problem
+[04:55] pyrony: serve me up some pr0n aurynn
+[04:55] tmzt: I just don't want to maintain two versions of the site
+[04:55] Aria: tmzt: It's the kind of thing I'd just write, since it's all of 3 lines.
+[04:55] aurynn: ...?
+[04:55] pyrony: lulz
+[04:55] tmzt: Aria: so I can just write to the req object? I haven't seen a tiny example of one
+[04:56] Aria: Sure. 
+[04:56] dstik1 has left the channel
+[04:56] aurynn: tmzt, yeah, just drop stuff onto the req object and call next()
+[04:56] mikeal has joined the channel
+[04:56] piscisaureus has joined the channel
+[04:56] Aria: That's the beauty of it. If you look at Express's "router" examples in their repo, it's got good examples.
+[04:56] aurynn: instead of response#*
+[04:56] sholmes: what happens if a static file's location is matches a route in express?
+[04:56] tmzt: I've also got to modularize this thing, app.router is what to use for that?
+[04:57] tmzt: sholmes: unless you tell node (or express or whatever) to server a static file it won't
+[04:57] beawesomeinstead has joined the channel
+[04:58] ChrisPartridge: sholmes: depends if your staticProvider is before or after the routing in the stack, afaik
+[04:58] Aria: sholmes: The beauty of /being/ the webserver rather than an application process is that your app has control over that. It serves it if you tell it to, not otherwise.
+[04:59] ezmobius has joined the channel
+[05:00] tmpvar has joined the channel
+[05:01] marcello3d: anyone here have experience with writing filters with jade
+[05:02] Jaye_: yep
+[05:02] pyrony: i wish i did
+[05:02] pyrony: then i could help UUUUUUUUU
+[05:02] justis has joined the channel
+[05:03] marcello3d: I basically want to automatically combine/compress multiple js files into a single composite file... do you think it makes sense to use a filter to do that?
+[05:03] kawaz_air has joined the channel
+[05:03] Ond has joined the channel
+[05:03] Jaye_: like :jsbundle and then list the sources under it? no reason you cant
+[05:03] marcello3d: yea
+[05:03] langworthy has joined the channel
+[05:04] marcello3d: would you use the "dom" mode or the plaintext mode?
+[05:04] marcello3d: it wasn't very clear to me
+[05:05] marcello3d: ah maybe this example will work
+[05:05] marcello3d: https://github.com/visionmedia/jade/blob/master/examples/nested-filters.js
+[05:06] Jaye_: thats not doing what you want but its close enough that you could reuse most of that code
+[05:08] marcello3d: yea
+[05:09] Jaye_: one caveat i ran into when writing a js bundler, make sure you do something to ensure the proper script order
+[05:09] Jaye_: i didnt use a jade filter though
+[05:10] marcello3d: yea I'm figuring I'll just use a jade filter to wrote the existing script tags
+[05:10] marcello3d: *wrap
+[05:10] marcello3d: then the order is defined in the jade file
+[05:11] hij1nx has joined the channel
+[05:11] marcello3d: and perhaps can run in development or staging mode
+[05:11] marcello3d: without much change
+[05:13] Jaye_: are you using express with jade though? there is already connect-asset-manager
+[05:13] marcello3d: I am
+[05:13] marcello3d: I don't know what that is, though
+[05:13] Jaye_: https://github.com/mape/connect-assetmanager
+[05:14] marcello3d: ooh, that looks awesome
+[05:15] marcello3d: does it support google closure compiler?
+[05:15] Me1000 has joined the channel
+[05:15] sholmes: I have this error that has been preventing me from moving forward with my app for the past couple of days
+[05:16] sholmes: damn thing is saying, "ReferenceError: module is not defined"
+[05:16] marcello3d: sounds like you're referencing a variable module somewhere
+[05:16] marcello3d: without defining it
+[05:16] Jaye_: uses uglifyjs
+[05:17] Jaye_: i prefer closure too but not many node projects seem to use it
+[05:17] sholmes: and here's the sript http://sammy.pastebin.com/YdcwbEr5
+[05:19] Jaye_: probably because advanced mode breaks node code since no one has written an externs file yet (working on it)
+[05:19] sholmes: marcello3d: I'll post all the files for ya
+[05:19] tmzt: still confused by the examples on expressjs, looking at the git ones next
+[05:20] tmzt: but it looks like middleware is a function(req, res, next) ?
+[05:20] marcello3d: sholmes: that's ok, I don't have time to look at it
+[05:20] tmzt: I remember almost getting this last time then skipping and going with what I know, I need to stop doing that
+[05:20] Ond: Yep, tmzt
+[05:21] Ond: It's not so bad
+[05:21] tmzt: oh, and generators too
+[05:21] tmzt: wow
+[05:21] Ond: Beg your pardon
+[05:21] sholmes: I'll post them for others then.
+[05:22] mike5w3c has joined the channel
+[05:22] tmzt: function roleCheck(role) {return function(r,r,n) {}}
+[05:22] marcello3d: Jaye_: but you shouldn't use node code on the client, anyways? why would you closure ocmpile it
+[05:22] tmzt: sholmes: use gist.github.com makes that really easy
+[05:22] marcello3d: uglify sounds good
+[05:23] marcello3d: and doesn't have the overhead of the jvm
+[05:23] Evet has joined the channel
+[05:23] marcello3d: impressive that it has a full javascript parser in javascript :)
+[05:23] tmzt: marcello3d: look at substack's new thing
+[05:23] sholmes: tmzt: good idea ;)
+[05:24] marcello3d: tmzt: what's that?
+[05:24] tmzt: browserfy I think, with require
+[05:24] Evet has joined the channel
+[05:24] tmzt: unless I have them confused
+[05:24] MikhX has joined the channel
+[05:24] marcello3d: this? https://github.com/substack/node-browserify
+[05:24] marcello3d: ah, I see
+[05:25] brapse has joined the channel
+[05:26] Jaye_: yeah, that
+[05:26] Jaye_: can write the same code for client and server
+[05:26] sholmes: Here we go just four simple files https://gist.github.com/831037
+[05:26] marcello3d: I will have to explore this more tomorrow
+[05:26] marcello3d: thanks for the pointers
+[05:27] Jaye_: should look at narcissus if you think uglify is cool, its a javascript engine written in javascript
+[05:27] boaz_ has joined the channel
+[05:27] marcello3d: one last question
+[05:27] marcello3d: on connect-assetmanager they say "Running with" "connect app -n 4"
+[05:27] marcello3d: what is that?
+[05:27] Jaye_: 4 instances
+[05:27] marcello3d: but what's the connect commandline?
+[05:28] mape: marcello3d: that is rather old, connect doesn't do that any more
+[05:28] Jaye_: dont think it exists anymore
+[05:28] marcello3d: ah ok
+[05:28] sholmes: updated it with the error message.
+[05:28] mape: but now you can use spark2 instead
+[05:28] marcello3d: spark2?
+[05:28] marcello3d: man. someone needs to organize all this information
+[05:28] mape: https://github.com/davglass/spark2
+[05:28] marcello3d: I feel quite lost in all the node modules :D
+[05:28] Jaye_: https://github.com/ry/node/wiki/modules
+[05:28] marcello3d: yea I read that list
+[05:29] abraham has joined the channel
+[05:29] Ond: What about the latest learnboost product
+[05:29] marcello3d: but a lot of people say it's outdated? and there are certainly...
+[05:29] Ond: Cluster-something?
+[05:29] marcello3d: a lot to go through :)
+[05:29] Jaye_: yeah there is stuff missing
+[05:29] mape: marcello3d: or https://github.com/LearnBoost/cluster , haven't tried it thought, I've used spark2 with great success
+[05:29] Jaye_: i did not know about cluster, that looks damn awesome
+[05:30] marcello3d: oh cool
+[05:30] mape: marcello3d: but in the end the asset manager won't be an issue of performance, most likely the bandwidth will max before the cpu, all it really does is serving buffers
+[05:30] marcello3d: sure
+[05:30] marcello3d: asset manager looks good, I like the multi-browser pre-processing
+[05:30] Jaye_: i use it for css/preprocessing and browserify for js
+[05:31] marcello3d: does it support hash naming?
+[05:31] marcello3d: like name the file based on a hash of the combined/minified contents
+[05:31] superjudge has joined the channel
+[05:31] marcello3d: the 'middleware' category on that modules list is a kinda unruly
+[05:32] Aria: Time to clean it up?
+[05:32] mape: marcello3d: nope but easy enough to write yourself, I just use timestamps, it's a little more rought but gets the cache invalidation done, https://github.com/mape/node-express-boilerplate/blob/master/server.js#L95
+[05:32] dthompson has joined the channel
+[05:33] marcello3d: timestamps cause problems on a cluster though, ya?
+[05:33] Jaye_: cluster wasnt around when he wrote that i think :P
+[05:33] marcello3d: if two different servers you're load balancing to have different times for a file
+[05:33] mape: Sure, then just create a handler har returns a hash and use that
+[05:34] marcello3d: sounds good
+[05:35] marcello3d: would you make a separate asset manager for each "group" of css/js files?
+[05:36] jtsnow has joined the channel
+[05:36] mape: no need really
+[05:36] marcello3d: like if you didn't want to load all js/css on every page
+[05:37] tg has joined the channel
+[05:38] Mike_Rice has joined the channel
+[05:38] mape: then just create a new group, should be no need for a new asset manager
+[05:38] Mike_Rice: ehlo Nodders
+[05:38] Mike_Rice: does anyone use Felixge's MySQL module?
+[05:38] marcello3d: ooh
+[05:38] marcello3d: I see now
+[05:38] marcello3d: the top level 'js' and 'css' are jsut ids
+[05:38] marcello3d: not the data types
+[05:39] marcello3d: (looking at https://github.com/mape/node-express-boilerplate/blob/master/server.js#L13)
+[05:39] devaholic has joined the channel
+[05:39] mape: jup, free to use anything there, that is just used for timestamps
+[05:40] tg` has joined the channel
+[05:40] mape: Need to head for for work but if you have any questions just hilight and I'll ge back i a bit
+[05:40] marcello3d: hah. I just noticed your name on asset manager :)
+[05:41] marcello3d: this looks solid, I'll give it a whirl tomorrow and see how it goes. cheers and enjoy your work
+[05:41] marcello3d: I out.
+[05:43] dthompson has joined the channel
+[05:43] tg` has joined the channel
+[05:44] echosystm has joined the channel
+[05:44] echosystm: is anyone here familiar with libeio ?
+[05:44] echosystm: (the IO library node uses)
+[05:46] tmzt: Ond: that was easy, so I have req.vhost now :)
+[05:46] tmzt: I guess I'll move it to the use set
+[05:46] Ond: Very nice
+[05:47] briznad has joined the channel
+[05:50] andrewfff has joined the channel
+[05:51] evanmeagher has joined the channel
+[05:52] Vertice has joined the channel
+[05:58] sholmes: it would be cool if npm could update node
+[05:59] tmzt: use n to update node
+[05:59] sholmes: okay, I think I found my problem. My sesame isn't installed correctly.
+[05:59] tmzt: it would be cool if n would match up the npm installation though, but I think it does
+[05:59] sholmes: tmzt: yeah, or nave. But it would be cool to have them combined into one.
+[06:00] Ond: /nvm
+[06:01] sholmes: When I try to run npm update I get this crap http://pastebin.com/1hPx94KA
+[06:01] humanchimp_ has joined the channel
+[06:02] sholmes: what should I do?
+[06:02] tg has joined the channel
+[06:02] Jaye_: is SubStack around?
+[06:03] sholmes: I want to do a complete reinstall of Node and npm.
+[06:03] aceking5 has joined the channel
+[06:03] sholmes: I feel like somehow it got corrupted
+[06:09] zentoooo has joined the channel
+[06:09] w0rse has joined the channel
+[06:10] rsdoiel has joined the channel
+[06:11] piscisaureus has joined the channel
+[06:11] Viriix has joined the channel
+[06:12] sholmes: Ugh! This is frustrating. :\
+[06:12] admc has joined the channel
+[06:13] sholmes: My installation of stuff seems all messed up. I tried updating npm using npm version and got an error.
+[06:13] sholmes: So I curled the install.sh file and that worked
+[06:14] sholmes: now I'm doing npm update and it just stopped in the middle of the process
+[06:16] russell_h: random javascript question, if I have an objected created by say 'new Animal()', is there a way to 'upgrade' that object to a Dog (which inherits from Animal) later?
+[06:17] trotter has joined the channel
+[06:18] broofa has joined the channel
+[06:19] sholmes: russell_h, upgrade?
+[06:20] russell_h: sholmes: pretty much reassign its prototype to Dog
+[06:21] ziro` has joined the channel
+[06:21] pquerna: russell_h: i mean, you could make a function that copied over all the function objects from Dog's prototype to that instance
+[06:21] pquerna: russell_h: but it seems really evily
+[06:21] beta_ has joined the channel
+[06:21] pquerna: (and expensive)
+[06:21] russell_h: pquerna: I want to not break references to the object without some sort of evil hackery
+[06:21] russell_h: (ie, keeping a list of all references)
+[06:24] pquerna: but change what its doing?
+[06:24] pquerna: maybe you just want a wrapper/proxy object
+[06:24] pquerna: that points to the 'real' backend
+[06:24] russell_h: yeah, that may have to happen
+[06:35] samcday_ has joined the channel
+[06:36] Utkarsh has joined the channel
+[06:37] Sebmaster has joined the channel
+[06:40] astropirate has joined the channel
+[06:47] EyePulp has joined the channel
+[06:51] Vertice has joined the channel
+[06:51] void_ has joined the channel
+[06:54] Coal has joined the channel
+[06:56] amerine has joined the channel
+[06:58] losing has joined the channel
+[06:59] kawaz_air has joined the channel
+[07:04] sveimac has joined the channel
+[07:05] joshmarshall_ has joined the channel
+[07:07] luke` has joined the channel
+[07:09] dgathright has joined the channel
+[07:10] tg has joined the channel
+[07:13] aguynamedben has joined the channel
+[07:14] mikedeboer has joined the channel
+[07:17] kawaz_air has joined the channel
+[07:17] SamuraiJack has joined the channel
+[07:20] Twelve-60 has joined the channel
+[07:23] MikhX has joined the channel
+[07:25] neshaug has joined the channel
+[07:26] isaacs has joined the channel
+[07:28] sleeplessinc has joined the channel
+[07:30] TomY_ has joined the channel
+[07:30] ilpoldo has joined the channel
+[07:33] Twelve-60 has joined the channel
+[07:42] bingomanatee has joined the channel
+[07:44] muhqu has joined the channel
+[07:44] kawaz_air has joined the channel
+[07:46] yozgrahame has joined the channel
+[07:47] mscdex has joined the channel
+[07:49] sholmes: It looks like I have three versions of expresss installed, should I uninstall the old ones?
+[07:49] halfhalo has joined the channel
+[07:50] razvandimescu has joined the channel
+[07:50] sholmes: And if I do uninstall old versions of express, will it remove dependencies?
+[07:50] samcday has joined the channel
+[07:50] samcday has left the channel
+[07:51] sholmes: it looks like qs (querystring) was included with express when I installed it, that's what I call a dependency.
+[07:51] samcday has joined the channel
+[07:51] Sebmaster has joined the channel
+[07:51] halfhalo has joined the channel
+[07:52] samcday has joined the channel
+[07:52] sholmes: I don't understand, if I have multiple versions of a package, wouldn't they conflict with eachother?
+[07:53] bsdguru has joined the channel
+[07:55] sholmes: I need to know if this is what's causing my problem.
+[07:56] aklt has joined the channel
+[07:59] isaacs: sholmes: hi
+[07:59] isaacs: sholmes: multiple versions of a package are fine
+[07:59] isaacs: sholmes: no, they do not conflict with one another
+[08:01] SubStack: hello frands!
+[08:01] zemanel: hello random stranger
+[08:01] tmpvar: SubStack, you're blowin up dude
+[08:01] sholmes: isaacs: well like I have two versions of your wonderful creation, npm, shouldn't I just remove old versions to minimize clutter, redundency or w/e
+[08:01] sholmes: ?
+[08:02] sholmes: SubStack: hey
+[08:02] isaacs: sholmes: sure, you can remove them if you want
+[08:02] isaacs: sholmes: pruning is hard in the current mode
+[08:02] isaacs: *model
+[08:02] tmzt: doesn't it also create a symlink though, if that's what he means by 'conflict'
+[08:02] tmzt: or just for latest
+[08:02] c12 has joined the channel
+[08:02] sholmes: isaacs: you never know if that might be causing the problem cause I'm using cygwin. ;P
+[08:02] isaacs: yeah, so, only one version is "active" at a time.  but packages *always* get the version they depend on
+[08:03] tmzt: what happened to your vps?
+[08:03] sholmes: isaacs: seems fine, all I need to do is npm uninstall
+[08:03] ivanfi has joined the channel
+[08:04] SubStack: ACTION explodes
+[08:04] sholmes: ACTION tries to put SubStack's pieces back together
+[08:05] groom has joined the channel
+[08:05] SubStack: ACTION 's pieces become fully-functional miniature substacks instead
+[08:06] sholmes: Will hold package versions just be ignored anyway?
+[08:07] sholmes: Ey, is there a way to go to the github or official site of an package from npm?
+[08:07] isaacs: sholmes: npm docs <whatever>
+[08:07] isaacs: sholmes: yeah, old package versions will be ignored.  they dont' take up much space.
+[08:08] sholmes: isaacs: not much hard drive space, but visual clutter when npm ls installed
+[08:08] isaacs: sholmes: yeah
+[08:08] qFox has joined the channel
+[08:08] pkrumins: we raised the money!!
+[08:08] isaacs: ACTION zzzz
+[08:08] pkrumins: we're set!
+[08:08] pkrumins: browserling lives!
+[08:08] isaacs: pkrumins: congratulations!
+[08:10] sholmes: Node.js is awesome, but hopefully I can get this snagg out of the way soon.
+[08:12] daglees has joined the channel
+[08:12] daglees has joined the channel
+[08:14] beawesomeinstead has joined the channel
+[08:17] clarkfischer has joined the channel
+[08:19] stagas: anyone got a recursive merge function for objects?
+[08:20] forzan has joined the channel
+[08:22] easternbloc has joined the channel
+[08:22] sholmes: Alright, I need to understand these Node errors I'm getting. When it says at /some/path at /some/other/path at ... etc., is this what is known as the callstack? That is, it's the functions and files where the error occured along with the function that called them?
+[08:22] Twelve-60 has joined the channel
+[08:23] bingomanatee: sholmes - your question is a little inspecific - is there a thing you can put on Gist that we can look at?
+[08:24] mraleph has joined the channel
+[08:25] sholmes: bingomanatee: well, here's my gastly error message that I'm currently trying to solve for these pass couple days https://gist.github.com/831037
+[08:26] sholmes: If you see the error, it says at ... at ... etc.
+[08:29] bingomanatee: Yes
+[08:29] bingomanatee: At the risk of telling you something you already know - the fundamental error is that a module you are requiring doesn't exist at the path you are passing to require.
+[08:30] swistak has joined the channel
+[08:30] bingomanatee: Two suggestions: 
+[08:30] Sebmaster has joined the channel
+[08:30] bingomanatee: 1) make sure that you have npm'd modules you need
+[08:31] ph^ has joined the channel
+[08:31] bingomanatee: 2) I tend to prefer to bundle as many modules as I can INSIDE my project so that my modules don't get upgraded from underneath my feet via NPM or some such. 
+[08:32] bingomanatee: in which case the patlh to them becomes something like __dirname + '/library/express/lib/express' 
+[08:32] bingomanatee: Understand?
+[08:32] sholmes: bingomanatee: yess
+[08:33] [AD]Turbo has joined the channel
+[08:34] [AD]Turbo: yo
+[08:34] sholmes: bingomanatee: but in order to do it, I'd need to install the module in the lib folder, which will add weight to my app.
+[08:34] bingomanatee: If you want a concrete example of this in action check out https://github.com/bignomanatee/noogle; the "context.js" file in root pre-seeds the local paths into the global path space, and express is in my library folder. 
+[08:37] aceking5: node needs something like bundler
+[08:37] sholmes: modifying isn't recommended anymore require.paths
+[08:37] SubStack: bundling eh?
+[08:37] sholmes: aceking5 bundler?
+[08:38] christophsturm has joined the channel
+[08:38] aceking5: sholmes: gembundler.com
+[08:38] mscdex: i thought npm supposedly had some kind of bundling thing?
+[08:39] Vertice has joined the channel
+[08:39] sholmes: aceking5 I don't get it. But maybe that's because I didn't go to gembundler.com
+[08:39] aceking5: it manages dependencies for ruby apps
+[08:40] shiawuen has left the channel
+[08:41] sholmes: ugh, look what happens when I try npm update https://gist.github.com/831316
+[08:42] Druid_ has joined the channel
+[08:42] bingomanatee: sholmes - whether NPM installs a module or you put it in the folder, express is still there. What sort of "Weight" bothers you - JS files are minscule. 
+[08:43] bingomanatee: NPM is as close to bundler as we have at this point. 
+[08:44] bingomanatee: Node isn't Ruby / RoR; it won't be for a few years. There are many ways it could be made better, but in its current form, Node already supports a lot of commercial efforts and OS projects. 
+[08:44] persson has joined the channel
+[08:45] mr_daniel has joined the channel
+[08:46] sholmes: bingomanatee: I meant visual clutter when looking at the files and folders in my app. xP
+[08:47] bingomanatee: I'm not sure that folder hygiene is the best way to judge the effectiveness of an application. 
+[08:48] bingomanatee: As far as I can tell, anything I can stick into a library file and refer to by a single require() statement is clean enough for me. 
+[08:48] derferman has joined the channel
+[08:48] MikeMakesIt has joined the channel
+[08:49] SvenDowideit has joined the channel
+[08:49] sholmes: bingomanatee: what module would be misisng in my script?
+[08:50] bingomanatee: And from what Ryan is showing at the meetups, that is the direction things ar going. 
+[08:50] bingomanatee: I'd guess express. However you can put console.log() statements in front of each require statemetn to find out for sure. 
+[08:52] dve has joined the channel
+[08:52] bingomanatee: sholmes - where are you based?
+[08:53] herbySk has joined the channel
+[08:53] prank has joined the channel
+[08:55] dve: can I pass a coffeescript as an argument to node?
+[08:57] sholmes: bingomanatee: california
+[08:58] bingomanatee: I'm speaking to a few groups in SF on node - I don't have extensive background in Node but all my work to date has been with express.
+[08:58] sholmes: do you mean console.log(require(' module'))?
+[08:58] slickplaid: what's the popular choice for parsing XML in node?
+[08:58] slickplaid: https://github.com/robrighter/node-xml ?
+[08:59] bingomanatee: sholmes  - I would go simpler. 
+[08:59] bingomanatee: console.log('loadng module foo");
+[09:00] bingomanatee: var foo = require("foo");
+[09:00] bingomanatee: etc. etc. 
+[09:00] w0rse has joined the channel
+[09:02] Utkarsh has joined the channel
+[09:03] sholmes: I see.
+[09:03] sholmes: so that way I can see where it stops?
+[09:03] bingomanatee: yup
+[09:03] bingomanatee: once you throw an error, the other console long's won't get triped.
+[09:04] Utkarsh_ has joined the channel
+[09:05] mikedeboer has joined the channel
+[09:06] CrazyGoogle has joined the channel
+[09:06] dgathright has joined the channel
+[09:09] sholmes: bingomanatee: the error only occurs after a request. :\
+[09:09] sholmes: So it must be something in express
+[09:11] aabt has joined the channel
+[09:12] zorzar_ has joined the channel
+[09:13] Sebmaster has joined the channel
+[09:14] markwubben has joined the channel
+[09:14] sholmes: Okay, it seems like including sesame causes the problem.
+[09:17] mike5w3c has joined the channel
+[09:19] dnyy has joined the channel
+[09:19] ntelford has joined the channel
+[09:21] dguttman has joined the channel
+[09:21] ROBOd has joined the channel
+[09:21] adambeynon has joined the channel
+[09:22] mbrochh has joined the channel
+[09:22] mbrochh has joined the channel
+[09:23] d0k has joined the channel
+[09:25] shripadk has joined the channel
+[09:26] shripadk: why has the url module changed significantly in Node v0.4.0?
+[09:27] tlrobinson_ has joined the channel
+[09:27] w0rse has joined the channel
+[09:30] Yuffster_work has joined the channel
+[09:31] ntelford has joined the channel
+[09:32] kristsk has joined the channel
+[09:33] aklt has joined the channel
+[09:36] skm has joined the channel
+[09:38] muhqu_ has joined the channel
+[09:39] mraleph has joined the channel
+[09:42] ph^ has joined the channel
+[09:46] pHcF has joined the channel
+[09:48] MikhX has joined the channel
+[09:48] slickplaid: Is the readme on https://github.com/tmpvar/jsdom correct? When I `npm install jsdom` and then attempt to use it `jsdom.env(etc...)` it says it doesn't have a method 'env'.
+[09:50] nook has joined the channel
+[09:50] apoc: slickplaid: i think its a new feature that is not already availible in the npm version/latest version
+[09:51] slickplaid: yeah that's what i'm thinking, too
+[09:51] cnu has joined the channel
+[09:52] romainhuet has joined the channel
+[09:52] RichardJ has joined the channel
+[10:02] chapel: I am relatively new to the whole source control thing, I like git, but am curious when it comes to active development, how often should I be committing ?
+[10:02] chapel: atm, I commit when stuff works, and commit fixes from there
+[10:03] Sami_ZzZ has joined the channel
+[10:04] kawaz_air has joined the channel
+[10:04] bzinger has joined the channel
+[10:05] Sebmaster: chapel: I do the same, mostly because im mostly building master with every program
+[10:05] chapel: yeah
+[10:05] chapel: I guess there isn't a wrong way if it is working for you
+[10:05] chapel: but I would like to learn the habits that make me an asset to team development
+[10:06] Sebmaster: yeah, i guess its just how you want your users to behave
+[10:06] Sebmaster: either just check out tags, or just commit working stuff
+[10:06] dgathright has joined the channel
+[10:07] EdJ has joined the channel
+[10:10] gattuso has joined the channel
+[10:13] Phyllio has joined the channel
+[10:14] muk_mb1 has joined the channel
+[10:18] Nexxy has joined the channel
+[10:18] Nexxy has joined the channel
+[10:20] Jaye_ has joined the channel
+[10:20] Treffynnon has joined the channel
+[10:20] sechrist has joined the channel
+[10:21] kristsk: what was the name of html entity module for node?
+[10:22] kristsk: that fresh one, from yesterday?
+[10:23] kristsk: https://github.com/substack/node-ent !
+[10:24] seivan: has the JSON leak been fixed in Node?
+[10:24] iszak has joined the channel
+[10:25] greut has joined the channel
+[10:29] TomY_ has joined the channel
+[10:29] springify has joined the channel
+[10:31] tbassetto has joined the channel
+[10:32] christophsturm: I'm getting an internal error in node 0.4's debugger: https://gist.github.com/ae6fdefea73f9ed7f47b
+[10:32] luke`_ has joined the channel
+[10:32] SubStack: kristsk: oh yeah and the person who was asking about html entities left irc before I could share it with them :/
+[10:33] chapel: hey SubStack :)
+[10:33] seivan: Are there any guides on node deployment, sys-adminy stuff, dealing with dependencies and etc?
+[10:33] slickplaid: SubStack++
+[10:33] v8bot:  slickplaid has given a beer to SubStack. SubStack now has 16 beers.
+[10:33] slickplaid: you make my life easier :D
+[10:33] squeeks: SubStack: patches welcome?
+[10:35] aceking5: seivan: npm for deps, Vows for testing
+[10:35] seivan: deployment=
+[10:35] SubStack: squeeks: patches for which?
+[10:35] seivan: server?
+[10:35] squeeks: node-ent
+[10:36] aceking5: deployment = whatever you want
+[10:36] greut: trying to install npm but got this: Error: Cannot find module 'semver'
+[10:36] greut: same with HEAD, 0.4.0 or 0.3.8
+[10:37] SubStack: squeeks: for just ampersands and angle brackets?
+[10:37] squeeks: no, not just spewing out HTML entities but also numerical entities
+[10:37] squeeks: (so XML parsers strictly parsing XHTML don't baulk)
+[10:41] SubStack: oh it does numerical stuff
+[10:42] SubStack: > require('ent').encode('\u1337')
+[10:42] SubStack: '&#4919;'
+[10:44] seivan: So I don't get it, why would you want a web-framework in Node.JS, I mean I can tell that Node.JS would be kick-ass for web-sockets and what not.
+[10:45] SubStack: seivan: because it's easy to write code that scales well
+[10:45] seivan has left the channel
+[10:45] seivan has joined the channel
+[10:45] SubStack: and code that handles streaming smartly from the start
+[10:46] aceking5: SubStack even if the code doesn't require async i/o?
+[10:46] seivan: yeah as aceking5 said
+[10:47] squeeks: SubStack: err, what about entities that could be either HTML or numerical? © can either be &copy; or &#xa9;
+[10:48] SubStack: squeeks: ent checks for the &copy; codes first and falls back on numerics
+[10:48] squeeks: Yes, I realise this.
+[10:49] SubStack: aceking5: well in practice servers tend to do a lot of i/o
+[10:49] squeeks: what if I want nothing but decimal/hex encodings since? hence suggestion of patch.
+[10:49] aceking5: this is true
+[10:50] SubStack: squeeks: ah sure that could be a useful patch
+[10:50] SubStack: I should also expose the raw data so people can poke at it
+[10:51] squeeks: also is it really best idea to pack entities in file and read filesystem? I just shove things like that into an object.
+[10:51] Sebmaster: greut: You have to do "git submodule update --init"
+[10:51] greut: TA
+[10:52] SubStack: squeeks: well when you require() you hit the disk /anyway/ and requires get cached too
+[10:53] squeeks: why hit it twice? I mean, it's not that good looking is it?
+[10:54] squeeks: http://cdn.mgsrvr.com/thissiterocks/pics/p495.jpg
+[10:55] SubStack: I like my data to be separate from the code is all
+[10:56] mscdex: http://www.youtube.com/watch?v=R_K6971WmAs
+[10:57] fermion has joined the channel
+[11:07] Coal has joined the channel
+[11:10] mikedeboer has joined the channel
+[11:11] Sebmaster has joined the channel
+[11:14] margle has joined the channel
+[11:21] mike5w3c_ has joined the channel
+[11:22] skohorn has joined the channel
+[11:26] unlink has joined the channel
+[11:26] unlink has joined the channel
+[11:27] ziro` has joined the channel
+[11:28] markwubben has joined the channel
+[11:33] kawaz_home has joined the channel
+[11:37] peteatolia_ has joined the channel
+[11:38] muk_mb has joined the channel
+[11:39] therrg has joined the channel
+[11:48] Fuu has joined the channel
+[11:48] jetienne has joined the channel
+[11:49] ilpoldo has joined the channel
+[11:50] margle has joined the channel
+[11:51] FireFly has joined the channel
+[11:54] aguynamedben has joined the channel
+[11:54] hwinkel has joined the channel
+[11:54] malkomalko has joined the channel
+[11:56] eee_c has joined the channel
+[11:57] unomi has joined the channel
+[12:00] eee_c1 has joined the channel
+[12:03] eee_c has joined the channel
+[12:08] pastak has joined the channel
+[12:14] eee_c has joined the channel
+[12:15] kordless_ has joined the channel
+[12:16] eee_c1 has joined the channel
+[12:18] eee_c has joined the channel
+[12:19] kawaz_home has joined the channel
+[12:21] jetienne: q. is there a doc on how to port to node 0.4 ?
+[12:21] jetienne: my code is from 0.1.103 or so :)
+[12:22] xandrews has joined the channel
+[12:22] kristsk: auch.
+[12:22] jetienne: :)
+[12:23] chapel: not from 0.1.x I dont think
+[12:23] greut: https://github.com/ry/node/wiki/Migrating-from-v0.2-to-v0.3
+[12:23] chapel: that one
+[12:23] chapel: for 0.2+
+[12:24] jetienne: thanks i will see with this one
+[12:24] jetienne: chapel: you know how long before to get the answer for parisjs tlak ?
+[12:24] jetienne: talk
+[12:24] chapel: no idea
+[12:25] jetienne: ok so i go on fixing my new wireless headset
+[12:25] eee_c has joined the channel
+[12:30] katspaugh has joined the channel
+[12:30] iszak: shouldn't it be for 0.2 to 0.4?
+[12:30] markwubben has joined the channel
+[12:31] eee_c1 has joined the channel
+[12:31] jetienne: 0.4 was 0.3 not so long ago :)
+[12:31] iszak: i know
+[12:31] iszak: but we should make it clear
+[12:31] iszak: because most people will be upgrading from 0.2 to 0.4 not 0.3 because it was unstable
+[12:31] Gruni has joined the channel
+[12:31] jetienne: iszak: start a wiki page about 0.2 to 0.4 ?
+[12:32] iszak: it's basically the same tho
+[12:33] Gruni|work has joined the channel
+[12:33] piscisaureus has joined the channel
+[12:34] dexterous has joined the channel
+[12:35] stagas_ has joined the channel
+[12:37] eee_c has joined the channel
+[12:38] xandrews has joined the channel
+[12:38] dexterous: hello folks, i was wondering if any of you have managed to build node 0.4.0 with the dtrace provider enabled?
+[12:39] dexterous: if yes, could you help me with a few queries about the same or point me to some resources?
+[12:44] x_or has joined the channel
+[12:45] mraleph has joined the channel
+[12:46] Elven_Thief has joined the channel
+[12:47] jpstrikesback has joined the channel
+[12:47] piscisaureus: h
+[12:49] aheckmann has joined the channel
+[12:51] brian_irish has joined the channel
+[12:53] swistak has joined the channel
+[12:58] juan77 has joined the channel
+[12:59] eee_c1 has joined the channel
+[12:59] juan77: howdy!
+[13:01] juan77: I need to read a file database.js in which contain a hash like { host: '', user: '' }, I do succesfully with fs.readFile('database.js', 'utf8', function(err, data) {}).... 
+[13:01] juan77: the problem is that when I try to retrieve data.host returns undefined.... 
+[13:01] prank has joined the channel
+[13:01] juan77: I'm missing something here... how I convert a data to an js object?
+[13:02] augustl: how do you invoke system commands with node? I.e. generating ssl certs with openssl.
+[13:02] dexterous: juan77: that's 'cause readFile is just giving you the data as a UTF8 string, not an pbject
+[13:02] augustl: not sure if what I'm asking for is shelling out, or popen, or something else..
+[13:02] juan77: hi dexterous thx for your response, I tried with binaty also and same problem, which encoding I need to use?
+[13:03] Bogus|laptop has joined the channel
+[13:03] dexterous: juan77: you want to try the JSON object
+[13:03] Bogus|laptop: hello ;D
+[13:03] piscisaureus: juan77: JSON.decode(data.toString())
+[13:04] eee_c has joined the channel
+[13:04] mape: juan77: in the callback do function(err, data){console.log(JSON.parse(data))}
+[13:04] piscisaureus: oh parse maybe :-)
+[13:04] mape: and yeah, toString()
+[13:04] mape: :P
+[13:04] Bogus|laptop: give for node.js a german website or group ?
+[13:04] mape: mix and match
+[13:04] juan77: hi mape snf dexterous thx!! :D
+[13:06] Bogus|laptop: and my second question, can I node.js install on shared hosting ?
+[13:06] mape: Bogus|laptop: Most likely not
+[13:07] Bogus|laptop: ahh ok, must a own server .. hmmm ...
+[13:07] dexterous: btw, just to repeat my question, has anyone managed to builde node@0.4.0 with dtrace probes? if yes, how?
+[13:07] eee_c1 has joined the channel
+[13:08] iszak: dexterous, wtf is dtrace?
+[13:10] ianward has joined the channel
+[13:11] strmpnk has joined the channel
+[13:11] dexterous: dtrace is the dynamic tracing utility built into solaris
+[13:11] stagas has joined the channel
+[13:11] eee_c has joined the channel
+[13:12] dexterous: @bcantrill added dtrace probes to node recently, which were pulled in by @ryah in 0.4.0
+[13:12] dexterous: i was trying to build a node with dtrace enabled to play with the probes
+[13:12] dexterous: but had no luck getting the provider to enable
+[13:13] dexterous: iszak: hope that answers your question
+[13:14] iszak: dexterous, what's the build command for dtrace?
+[13:15] Nexxy has joined the channel
+[13:16] dexterous: well, i looked through the wscript in 0.4.0 and it had a --with-dtrace flag that built the provder from src/node_provider.d as a postprocess step
+[13:18] iszak: oh I see, restricted to solaris.
+[13:18] iszak: is Solaris any good?
+[13:19] groom: hi, i'm doing this:
+[13:19] groom: script  = window.document.createElement('script');
+[13:19] groom: script.src = 'file://' + __dirname + '/foo.js';
+[13:19] groom: script.onload = function() {
+[13:19] groom:   console.log("done"); 
+[13:19] groom: }
+[13:19] groom: but i never see "done". is there sth like onerror?
+[13:19] iszak: because it's client side and doesn't load it?
+[13:19] iszak: i mean it's server side
+[13:19] jetienne: groom: note that any of this is node.js
+[13:20] jetienne: groom: after that you may need to put in the window with appendTo
+[13:20] groom: yes, sure, i use jsdom
+[13:20] iszak: ew solaris looks bad :(
+[13:21] jetienne: groom: wow jsdom supports that ? i wasnt aware of it
+[13:21] groom: should have said so, sorry
+[13:21] fly-away has joined the channel
+[13:21] jetienne: groom: why not simply do a require("./foo.g") btw
+[13:22] groom: i'm not sure, i c&p'ed it, but it is part of a jQuerify construct
+[13:25] Bonuspunkt has joined the channel
+[13:25] EdJ has joined the channel
+[13:26] Bogus|laptop has left the channel
+[13:26] EdJ: damn good composition that
+[13:26] EdJ: shit, wrong window
+[13:27] EdJ: :D
+[13:27] julienXX has joined the channel
+[13:27] piscisaureus: mraleph: that toolchain selection patch, is that any likely to land?
+[13:29] Sebmaster has joined the channel
+[13:29] lukegalea has joined the channel
+[13:31] fairwinds has joined the channel
+[13:35] saschagehlich has joined the channel
+[13:35] Sami_ZzZ has joined the channel
+[13:35] saschagehlich: hey, what is the best way to get the internet ip of the server my node process is running on?
+[13:39] xandrews has joined the channel
+[13:39] iszak: saschagehlich, ifconfig?
+[13:41] ryanfitz has joined the channel
+[13:44] iszak: saschagehlich, like ifconfig eth0
+[13:44] iszak: saschagehlich, like ifconfig eth0 down even
+[13:44] iszak: s/down/up/
+[13:44] saschagehlich: okay, thx
+[13:45] MattJ has joined the channel
+[13:46] Viriix has joined the channel
+[13:47] aheckmann has joined the channel
+[13:47] Ari-Ugwu has joined the channel
+[13:48] aguynamedben has joined the channel
+[13:49] fumanchu182 has joined the channel
+[13:50] CrazyGoogle has joined the channel
+[13:52] saschagehlich has joined the channel
+[13:53] nook has joined the channel
+[13:53] johnnywengluu has joined the channel
+[13:54] nook has joined the channel
+[13:56] davidsklar has joined the channel
+[13:57] Kingdutch has joined the channel
+[13:58] astoon has joined the channel
+[14:00] vyvea has joined the channel
+[14:06] TomsB has joined the channel
+[14:08] margle has joined the channel
+[14:09] pengwynn has joined the channel
+[14:12] vilhonen: is there a way to see call stack of a running node.js application?
+[14:13] vilhonen: I'm trying to create an expresso test that tests my web application but it never exits
+[14:13] vilhonen: it does the request and manages to report that the test failed but after that it doesn't quit
+[14:14] kristsk: runnaway setTimeout maybe?
+[14:15] vilhonen: is there any way to inspect the call stack at arbitrary moment
+[14:15] vilhonen: with the bundled debugger I can put breakpoints in code but I have no idea where it's waiting
+[14:20] Coal has joined the channel
+[14:21] masondesu has joined the channel
+[14:22] strmpnk has joined the channel
+[14:22] vilhonen: I think I'll try with a different test framework
+[14:22] vilhonen: it seems to be that the timeout functionality isn't working either in expresso
+[14:23] c4milo has joined the channel
+[14:25] Vertice has joined the channel
+[14:26] confoocious has joined the channel
+[14:29] dylang has joined the channel
+[14:30] Remoun has joined the channel
+[14:32] dylang has joined the channel
+[14:34] evl: I previously ran 0.2.6 on all my boxes, I brew upgraded today and find myself at 0.4. Is there a writeup of the most important changes anywhere?
+[14:34] Me1000 has joined the channel
+[14:34] kristsk: uh huh, this seems to be the topic of the day 
+[14:35] kristsk: evl: this is pretty much all there is - https://github.com/ry/node/wiki/Migrating-from-v0.2-to-v0.3
+[14:35] evl: too bad it's not in the topic ;)
+[14:36] brianc: evl: the version directly after 0.2.6 is 0.4.0
+[14:36] brianc: evl: the 'odd numbered' branches are considered unstable
+[14:36] s1ghs has joined the channel
+[14:36] jakeskik: vilhonen: what testframework you are using?
+[14:36] brianc: evl: so eventually you'll brew upgrade from 0.4.x to 0.6.0
+[14:36] vilhonen: jakeskik: expresso
+[14:36] vilhonen: I'm trying with vows now
+[14:36] s1ghs: hey people
+[14:37] Me1000 has joined the channel
+[14:37] jakeskik: vilhonen: vows is pretty nice
+[14:37] s1ghs: i'm quite sure it's not possible tho i thought i'd ask - is it possible to extend modules in node?
+[14:37] vilhonen: it still bothers me that I might get stuck somewhere without any means to determine where my node.js application is waiting
+[14:37] vilhonen: how do you guys deal with it
+[14:37] s1ghs: like one module inherits all goodies from other etcetra?
+[14:38] lukegalea has joined the channel
+[14:38] FireFly: s1ghs, you can require() the other module and iterate over its properties, reassigning them to your exports
+[14:38] FireFly: and then alter the functions you export
+[14:38] FireFly: I suppose
+[14:38] jakeskik: vilhonen: are you working with some web framework or with plain node.js?
+[14:38] s1ghs: hmm
+[14:38] jakeskik: toby is quite nice for rest apis etc
+[14:39] vilhonen: jakeskik: it shouldn't matter but I'm working with the express web framework
+[14:39] groom: jetienne: appendTo was the key, thx
+[14:39] jakeskik: vilhonen: i'd go with toby then :)
+[14:39] jetienne: groom: cool
+[14:39] Poetro has joined the channel
+[14:39] aiurea has joined the channel
+[14:40] aiurea: anyone having problems with the latest mongoose not saving anything?
+[14:41] c4milo: vilhonen: try specify :P 
+[14:41] jakeskik: or toby + vows, however that's a bit of a challenge due to vows async testing model and tobys (in)compatible api. One needs to write wrapper class for toby
+[14:41] s1ghs: FireFly: guess that would mean that one module can be exteneded by only a single sub module since modules are cached
+[14:42] vilhonen: the test framework doesn't matter as I'm not able to find out what my program is doing even in the simplest of the cases
+[14:42] piscisaureus: mraleph: you want me to cast that pthread_t twice?
+[14:43] jakeskik: vilhonen: console.log ? =)
+[14:43] piscisaureus: pthread_t -> intptr_t -> enum
+[14:43] mraleph: piscisaureus: well that will not work on x64
+[14:43] mraleph: piscisaureus: unfortunately :-(
+[14:43] piscisaureus: mraleph: but cygwin doesn't support x64 anywayu
+[14:43] piscisaureus: but I think it would be ugly as well 
+[14:44] jakeskik: vilhonen: or if you don't mind creating a gist at gist.github.com, we could take a look
+[14:44] mraleph: piscisaureus: oh! that changes the game :-) yes please do cast it to enum. and add the check that people are not trying to build x64 arch.
+[14:44] evl: brianc: thanks :)
+[14:45] vilhonen: jakeskik: expresso was unnecessarily waiting for my server for some reason but I already changed the framework and it works now for me
+[14:45] jtsnow has joined the channel
+[14:45] skohorn has joined the channel
+[14:45] mraleph: piscisaureus: I will be slightly ugly but at least that ugliness will not touch platform.h
+[14:45] piscisaureus: mraleph: why doesn't that enum use kIntptrSignbit and kUintptrAllBitsSet
+[14:45] piscisaureus: ?
+[14:46] BillyBreen has joined the channel
+[14:46] sivy has joined the channel
+[14:46] piscisaureus: that would make it 64-bit on 64-bit platforms I guess
+[14:46] darkredandyellow has joined the channel
+[14:46] star_ has joined the channel
+[14:47] star_: hi
+[14:47] mraleph: piscisaureus: hmm. for some reason I thought that enum can't go beyond 32bit.
+[14:47] piscisaureus: maybe it is true
+[14:48] mraleph: piscisaureus: and we don't actually need 64bits or any other platform.
+[14:49] postwait has joined the channel
+[14:50] mraleph: piscisaureus: so you can just add a check like STATIC_ASSERT(sizeof(LocalStorageKey) == sizeof(pthread_key_t))...
+[14:50] tabo has joined the channel
+[14:51] nonnikcam has joined the channel
+[14:54] hij1nx has joined the channel
+[14:56] chrischris has joined the channel
+[14:59] bentruyman has joined the channel
+[14:59] mynyml has joined the channel
+[15:00] jherdman has joined the channel
+[15:02] McConnell has joined the channel
+[15:05] devrim has joined the channel
+[15:05] confoocious has joined the channel
+[15:05] confoocious has joined the channel
+[15:06] dnolen has joined the channel
+[15:06] robotarmy has joined the channel
+[15:07] augustl: can I use node to do https client verification?
+[15:08] augustl: nvm just found it (I think)
+[15:08] juan77_ has joined the channel
+[15:09] ncb000gt has joined the channel
+[15:09] nivoc has joined the channel
+[15:09] nivoc: hi
+[15:09] ncb000gt: hey
+[15:09] nivoc: nice here - warm and comfy
+[15:09] nivoc: :)
+[15:09] ncb000gt: :)
+[15:10] nivoc: with so many people :)
+[15:10] ncb000gt: aye, there are a lot of people here
+[15:11] felixge has joined the channel
+[15:11] felixge has joined the channel
+[15:11] stagas has joined the channel
+[15:11] humanchimp has joined the channel
+[15:12] dylang has joined the channel
+[15:12] bshumate has joined the channel
+[15:15] vipaca has joined the channel
+[15:15] vipaca has joined the channel
+[15:15] randylien has joined the channel
+[15:19] tjholowaychuk has joined the channel
+[15:20] fugoki has joined the channel
+[15:21] jpld has joined the channel
+[15:21] jpld has joined the channel
+[15:21] piscisaureus: mraleph: you actually read the license when reviewing code... wow, that thorough
+[15:22] bradleymeck has joined the channel
+[15:23] yhahn has joined the channel
+[15:23] arpegius has joined the channel
+[15:29] stagas has joined the channel
+[15:32] bingomanateeIpho has joined the channel
+[15:35] sirkitree has joined the channel
+[15:36] saschagehlich_ has joined the channel
+[15:37] stagas_ has joined the channel
+[15:38] bzinger has joined the channel
+[15:38] gf3 has joined the channel
+[15:39] pifantastic has joined the channel
+[15:39] skm has joined the channel
+[15:42] voodootikigod: node-serialport is updated to 0.4.0 and verified to both write and more importantly read.
+[15:43] voodootikigod: only works on important OSes
+[15:43] voodootikigod: for now
+[15:43] ncb000gt: voodootikigod: Like Linux?
+[15:43] ncb000gt: :)
+[15:43] voodootikigod: like anything with a modern *nix kernel
+[15:43] voodootikigod: by modern 
+[15:43] voodootikigod: i mean > 1995
+[15:43] ncb000gt: :)
+[15:44] ncb000gt: RH7.0
+[15:45] davidascher has joined the channel
+[15:48] vipaca: Does anybody know the best mysql connector for node?
+[15:48] brianc: http://github.com/felixge/node-mysql is used in production @ transloadit.com
+[15:48] wankdanker has joined the channel
+[15:50] mike5w3c: brianc: cool
+[15:51] sveimac has joined the channel
+[15:52] rawroland has joined the channel
+[15:52] gf3 has joined the channel
+[15:52] augustl: when using client certificates and requestCert and rejectUnauthorized on tsl, how do I get information about the client cert?
+[15:55] dguttman has joined the channel
+[15:55] Yuffster has joined the channel
+[15:57] Chainfire: is it possible to use node.js in a "fire and forget" way, i.e., client opens connection to /perform-some-background-stuff, connection is immediately closed, but the task is still performed ?
+[15:58] WarriorSl has joined the channel
+[16:00] brianc: Chainfire: yes, that is possible
+[16:00] Chainfire: brianc> just call response.close(), that'll be that for the client, and add more script afterwards ?
+[16:00] vipaca: Trying to figure out why I'm having this (https://github.com/felixge/node-mysql/issues/closed#issue/2) issue with seqalize
+[16:01] brianc: Chainfire: in an http response you'll want to still response.writeHead & response.end
+[16:01] softdrink has joined the channel
+[16:01] Chainfire: ah right
+[16:01] brianc: Chainfire: and then afterwards, go about your background processing as usual
+[16:02] ceej has joined the channel
+[16:02] Chainfire: cool
+[16:02] brianc: Chainfire: the tradeoff is if there's a problem with the background process the client wont be informed
+[16:02] Chainfire: the client doesn't care
+[16:02] Chainfire: in this case
+[16:02] brianc: Chainfire: sweet
+[16:02] Chainfire: node.js will have to log the problem somewhere
+[16:03] brianc: ya
+[16:03] Chainfire: this is actually I think not possible with most other serverside tools (like apache/php for instance)
+[16:03] ajcates has joined the channel
+[16:04] juan77: hi, any one knows that mysql-libmysqlclient has problem installing with npm 0.3.0-6 and node 0.4.0? I can't figure out how to install it...
+[16:04] Chainfire: is using a httpserver over 127.0.0.1 significantly faster than over <network ip> , btw ?
+[16:04] fatjonny has joined the channel
+[16:04] kristsk: um, i am not sure it is supported on 0.4
+[16:04] squeeks: Chainfire: not really.
+[16:05] juan77: mysql-libmysqlclient works fine with 0.3.8, I think that doens't have changed too mucho to cause this kind of problem...maybe I'm wrong..
+[16:05] kristsk: if you have huge packets, there might be difference, but usuaaly it is quite 
+[16:05] losing has joined the channel
+[16:05] kristsk: negligible
+[16:05] Chainfire: payload is not expected to be more than 256 bytes
+[16:06] kristsk: then i would not wory much about it
+[16:06] kkaefer: is there a way make to specify a thread ID or something like that so that libeio always executes my requests in the same thread?
+[16:06] kkaefer: or is there any other way to make sure that libeio always uses the same thread?
+[16:06] kristsk: you will probably hit some other bottleneck before this becomes an isue
+[16:06] squeeks: like the kernel's IP stack and it's most likely poor configuration
+[16:07] Chainfire: in this use case PHP would connect to a node.js socket (on the same machine) that would do some extra processing... of course I want that to be as quick as possible so the user does not have to wait long for it
+[16:08] squeeks: Chainfire: what kristsk said. your issues won't be using lo0 v. en0. your issues will be code and configuration.
+[16:08] squeeks: remember: premature optimisation is a problem, not a solution.
+[16:08] Chainfire: k, just making sure there aren't any hidden snags.
+[16:09] kristsk: why send it to php?
+[16:09] colinclark has joined the channel
+[16:09] kristsk: php will hog ram on bigger loads
+[16:09] kristsk: or did i misunderstand somthing
+[16:11] squeeks: something tells me your PHP (let me guess, Apache + mod_php?) might be the bigger problem than node.
+[16:11] Chainfire: kristsk> because the rest of the app is in PHP... with multiple varnishes in front. The idea is to send off data regarding what has to be invalidated on all varnish servers (instead of just the one the request came through). Node.js receives this data and sends it over its persistant CLI connections to all the varnish servers, without PHP having to wait for it.
+[16:12] kristsk: um, why not make node do that? is the logic too complex?
+[16:12] zachsmith has joined the channel
+[16:12] Chainfire: make node do what ?
+[16:12] Chainfire: exactly ?
+[16:12] augustl: I'll try again.. When using client certificates in TLS in node, is there a way for me to get a hold of that certificate?
+[16:12] dthompson has joined the channel
+[16:13] kristsk: aah, yea, i got the wrong idea.
+[16:13] jlecker has joined the channel
+[16:13] kristsk: your solution actually makes sense.
+[16:13] Chainfire: well, thats a good thing, I would say.
+[16:14] coobr has joined the channel
+[16:14] dtrasbo has joined the channel
+[16:14] lukegalea: Chainfire: Maybe you could use resque?
+[16:14] augustl: hmm, apparently not https://github.com/ry/node/blob/0474ce67908c9afddab6/src/node_crypto.cc#L968
+[16:14] sleeplessinc has joined the channel
+[16:14] lukegalea: ie: fire off the job via redis and have node workers pull the jobs off the queue.
+[16:14] augustl: its freed the line below
+[16:15] Chainfire: we're not using redis
+[16:15] daniellindsley has joined the channel
+[16:15] bentruyman has joined the channel
+[16:15] w0rse_ has joined the channel
+[16:16] piscisaureus has joined the channel
+[16:16] Chainfire: also kristsk> that's pretty much what I'm betting on, Apache/PHP being a bigger problem than Node.js. The other way around and it would fall apart ;)
+[16:16] piscisaureus: mraleph: so I addressed all your issues
+[16:16] pyrony has joined the channel
+[16:17] squeeks: Chainfire: are you using anything apache specific? why not consider trading out apache for nginx + fastcgi?
+[16:17] Chainfire: squeeks> that might happen too
+[16:17] mraleph: piscisaureus: then press the magic 'm' button on your keyboard so I will get a mail from you :-)
+[16:17] aurynn has joined the channel
+[16:17] lukegalea: well, it wouldn't be hard to toss it in. The reason I raise it is that what you are describing sounds exactly like what we do.. we have a bunch of web servers (php, ruby, etc) depending on the site and anything that doesn't directly pertain to the response is backgrounded via resque. if you just have php hit node directly and trigger immediate action you have no ability to throttle the rate at which it occurs.
+[16:17] mraleph: piscisaureus: oh you did it
+[16:17] lukegalea: but if you introduce an intermediate job store like redis, etc..
+[16:17] Sami_ZzZ has joined the channel
+[16:17] squeeks: Chainfire: watch your memory consumption when you do it.
+[16:17] Chainfire: but then there'd prolly be something like ngins --> X varnish --> Y webservers
+[16:17] lukegalea: then you can control the number of workers.
+[16:17] seivan: Alright
+[16:18] piscisaureus: oh now i did it twice :-(
+[16:18] seivan: settled for Node and Redis
+[16:18] Chainfire: err, nginx --> X varnish --> Y nginx
+[16:18] alexweber15 has joined the channel
+[16:19] squeeks: Chainfire: I do this trick with memcached and nginx's memcached module by putting expiration on keys, my app can write the page to memcached, and nginx only serves from that until expiration.
+[16:19] mraleph: piscisaureus: you are already in the AUTHORS file I presume?
+[16:19] piscisaureus: yeah
+[16:19] jakehow_ has joined the channel
+[16:19] jakehow has joined the channel
+[16:19] piscisaureus: also signed the CLA already
+[16:20] mraleph: piscisaureus: you had I signed sometime ago, did something change?
+[16:20] mraleph: *it signed
+[16:20] mraleph: why I started typing "I" instead of "it" all the time... 
+[16:20] piscisaureus: mraleph: I don't know if something about the cla changed 
+[16:21] piscisaureus: mraleph: I had it signed for this issue: http://codereview.chromium.org/5471001/
+[16:21] Chainfire: squeeks> its interesting solution and something I have heard of before. that didn't fit our needs, but I'm searching my mind why that was
+[16:22] mraleph: piscisaureus: well. CLA is once and for all issues.
+[16:22] Chainfire: I think because nginx+memcached simply can't match the speed of varnish
+[16:22] nuba has joined the channel
+[16:22] piscisaureus: mraleph: mr Ager did not like the build system changes?
+[16:23] squeeks: Chainfire: stick some varnish in front of ngnix then!
+[16:24] Chainfire: well yeah that's ultimately probably going to happen, but in a different manner :)
+[16:24] squeeks: Chainfire: I can saturate a bonded GbE link with a few nginx boxes this way, I have far greater reads over writes and invalidation is currently set to 96 hours in some parts, 30 minutes in others.
+[16:25] seivan: hmm
+[16:26] Chainfire: is this a local memcached or a distributed one ?
+[16:26] wilken has joined the channel
+[16:27] eee_c has joined the channel
+[16:28] pietern has joined the channel
+[16:28] softdrink: java fills me with rage. just sayin'.
+[16:29] Sebmaster has joined the channel
+[16:29] aurynn: Java fills most everyone with rage.
+[16:29] aurynn: Except when it doesn't.
+[16:29] Sebmaster: ^
+[16:29] bmavity has joined the channel
+[16:29] kristsk: joyfull rage, yes?
+[16:29] Sebmaster: it does!
+[16:30] kristsk: cmon, java is nice, if not abused
+[16:30] Sebmaster: it still makes me rage
+[16:31] Sebmaster: node programs are so much funnier to write
+[16:31] aurynn: funnier?
+[16:31] Sebmaster: yea
+[16:31] SwiftLayer has joined the channel
+[16:31] Sebmaster: imo writing java is boring
+[16:31] aurynn: so writing node is a laugh?
+[16:31] aurynn: (I think that word doesn't mean what you think it means)
+[16:32] spaceinvader: s/funnier/more fune/
+[16:32] Sebmaster: ^
+[16:32] spaceinvader: s/e$/e/
+[16:32] spaceinvader: wait i fial
+[16:32] aurynn: s/e$//
+[16:32] Sebmaster: lol
+[16:32] aurynn: ^^;
+[16:33] ajashton has joined the channel
+[16:34] kakamba has joined the channel
+[16:34] pyrony: im on a train
+[16:35] Vertice has joined the channel
+[16:35] aurynn: I'm on a couch
+[16:36] kkaefer: I can't find any documentation on libeio's eio_grp*
+[16:36] Sebmaster: im on teh internetz?
+[16:36] spaceinvader: i'm in a lecture hall
+[16:36] kkaefer: is it documented what it does?
+[16:36] pyrony: im in a tunnel
+[16:37] aurynn: I'm on 3g!
+[16:37] pyrony: lol weak
+[16:37] pyrony: 4g sprint ftw
+[16:37] pyrony: j/k
+[16:37] pyrony: clearly ure internets are working
+[16:37] pyrony: so that's nice
+[16:37] sechrist has joined the channel
+[16:38] sprout has joined the channel
+[16:38] sveimac has joined the channel
+[16:40] Roconda has joined the channel
+[16:41] JamieD has joined the channel
+[16:42] nivoc: i'm at my grandma's
+[16:42] springmeyer has joined the channel
+[16:42] nivoc: on very slow 2g
+[16:42] nivoc: gprs
+[16:43] nivoc: with 8kb/s max
+[16:43] bradleymeck: interesting, i can curl / git clone / etc but when i try net.createConnection on Cygwin I get an eperm...
+[16:43] ph^ has joined the channel
+[16:44] nivoc: interesting, i'm on macos and do not need cygwin
+[16:45] MikhX has joined the channel
+[16:45] pt_tr has joined the channel
+[16:45] Utkarsh__ has joined the channel
+[16:45] bradleymeck: i wish i didnt need it
+[16:46] MikhX_ has joined the channel
+[16:46] hij1nx has joined the channel
+[16:46] nivoc: :)
+[16:47] nivoc: you should ask on stackoverflow
+[16:47] floby has joined the channel
+[16:48] floby has left the channel
+[16:48] piscisaureus: mraleph: thanks :-O. so you meet your issues closed quota for this week :p
+[16:48] jakeskik: bradleymeck: ubuntu on dualboot or virtualbox and life is good again :)
+[16:48] mraleph: I wish every issue was so easy to close :-)
+[16:49] sivy has joined the channel
+[16:50] aurynn: nivoc, that makes me glad for 3g coverage...
+[16:50] aurynn: but, 8k/s is enough to IRC and ssh with
+[16:50] kkaefer: ryah: it seems like you're the only person that has written anything about libeio's groups; can you explain what they are used for and how to use them?
+[16:50] colinclark has joined the channel
+[16:50] nivoc: bradleymeck: is that you? http://stackoverflow.com/questions/5028528/error-while-running-node-js-program
+[16:51] kkaefer: from what I gathered, it's a way to guarantee that callbacks are executed in the same thread
+[16:51] nivoc: aurynn: yes - at least it's stable :)
+[16:51] kkaefer: but there seems to be absolutely no documentation whatsoever on what groups do
+[16:52] bradleymeck: nivoc, no
+[16:53] nivoc: :)
+[16:54] JamieD: hi all, anyone have a recommendation for a twitter package? Theres a few around so wanted to choose a decent one
+[16:55] nivoc: b/c it was posted 4h ago and with unspecific eperm
+[16:55] jtsnow has joined the channel
+[16:55] sooli has joined the channel
+[16:55] hunterloftis: Anybody here familiar with fugue? I'm having an issue where worker processes aren't killed when the fugue server is killed by Ctrl+C
+[16:56] skm: whats the best way to add an event listener to an event emitter changing the context of this in the function?
+[16:56] Gruni has joined the channel
+[16:57] boaz has joined the channel
+[16:57] skm: whats the best way to add an event listener to an event emitter changing the context of this in the function?
+[16:57] skm: oops sorry
+[16:57] aheckmann has joined the channel
+[16:58] briznad has joined the channel
+[16:58] xla has joined the channel
+[16:58] dustinwhittle has joined the channel
+[16:59] sooli: Hi there, I'm trying to get a stream using Reston ... everything seems ok . But I think I have an encoding issue while storing file
+[16:59] cnu_ has joined the channel
+[17:01] sooli: here a partial : http://pastie.org/1575349
+[17:01] sooli: � are wrong I guess
+[17:01] davidr_ has joined the channel
+[17:02] zemanel has joined the channel
+[17:02] ryanfitz has joined the channel
+[17:02] davidr_: I'm having trouble compiling node.js
+[17:02] davidr_: I can't find an answer to the following error...
+[17:03] davidr_: File doesn't exist: libglade2.0.sh exit code 2
+[17:03] davidr_: Thanks for any help
+[17:03] kristsk: libglade eh
+[17:03] davidr_: yup
+[17:03] kristsk: for node?
+[17:03] davidr_: yes
+[17:04] colinclark has joined the channel
+[17:04] kristsk: huh, dunno :/
+[17:05] pifantastic_ has joined the channel
+[17:05] pyrony has joined the channel
+[17:05] sprout has joined the channel
+[17:07] Kingdutch has joined the channel
+[17:07] broofa has joined the channel
+[17:08] broofa has joined the channel
+[17:08] Kingdutch has joined the channel
+[17:09] Kingdutch has joined the channel
+[17:10] eresair has joined the channel
+[17:11] noahcampbell has joined the channel
+[17:12] kriszyp has joined the channel
+[17:12] jamesarosen has joined the channel
+[17:13] davidr_: figured out the issue... making node (thanks)
+[17:16] wadey has joined the channel
+[17:20] [[zz]] has joined the channel
+[17:21] mike5w3c_ has joined the channel
+[17:23] yozgrahame has joined the channel
+[17:26] jakehow has joined the channel
+[17:27] Me1000 has joined the channel
+[17:28] elux has joined the channel
+[17:28] aurynn has joined the channel
+[17:28] augustl: which version of python is required to make node?
+[17:29] augustl: "make" with 3.1.3-2 throws a syntax error
+[17:30] MiiCode2 has joined the channel
+[17:30] Bioxyde has joined the channel
+[17:30] Bioxyde: hello
+[17:30] Bioxyde: is there anyway
+[17:30] Bioxyde: I can install multiple npm modules at the same time?
+[17:30] Bioxyde: some syntax like npm install express, redis, module_here
+[17:31] jimmyz2 has joined the channel
+[17:31] springmeyer has joined the channel
+[17:31] tjholowaychuk: Bioxyde: npm install foo bar baz
+[17:31] tjholowaychuk: works
+[17:31] tjholowaychuk: AFAIK
+[17:32] Bioxyde: OK, thanks.
+[17:32] saschagehlich has joined the channel
+[17:32] tjholowaychuk: pretty sure ive done it lots
+[17:32] romainhuet has joined the channel
+[17:32] Bioxyde: Also works with uninstall right?
+[17:32] Bioxyde: Also, any module to keep my modules updated?
+[17:33] davidascher has joined the channel
+[17:33] arpegius has joined the channel
+[17:33] tjholowaychuk: Bioxyde: npm update
+[17:33] Bioxyde: oh.
+[17:33] Bioxyde: Lol, great.
+[17:33] augustl: hmm, building node aint easy
+[17:34] Bioxyde: Augstl:
+[17:34] Bioxyde: Use n
+[17:34] sprout has joined the channel
+[17:34] augustl: n?
+[17:34] nejucomo has joined the channel
+[17:34] Bioxyde: yeah
+[17:34] Bioxyde: npm install n
+[17:34] Bioxyde: n 0.4.0
+[17:34] Bioxyde: It was made by tjholowaychuk, he is here, just ask him how to use it.
+[17:35] Bioxyde: It's a node.js version manager.
+[17:35] tjholowaychuk: i think he might mean hes having issues with dependencies
+[17:35] tjholowaychuk: ?
+[17:35] augustl: I already have node installed
+[17:35] tjholowaychuk: i dunno
+[17:35] MiiCode2 has left the channel
+[17:35] augustl: currently trying to handle "Waf: The wscript in '/home/augustl/code/libs/node' is unreadabl"
+[17:36] MiiCode2 has joined the channel
+[17:36] augustl: ah, ./configure solved it
+[17:36] Bioxyde: Heh.
+[17:37] ajnasz has joined the channel
+[17:39] BillyBreen has joined the channel
+[17:39] darkredandyellow: I have successfully installed node.js and jsdom - trying to run "node omg.js" where omg.js contains the very first "easymode" example https://github.com/tmpvar/jsdom/ I get:
+[17:39] darkredandyellow: node.js:116      throw e; // process.nextTick error, or 'error' event on first tick        ^
+[17:39] darkredandyellow: Error: Cannot find module 'request'
+[17:39] darkredandyellow: ideas?
+[17:40] augustl: patching node to expose the client certificate in TLS attempt #1
+[17:41] narph: Hmm what's the new way to require a library? Must the module set the main property in package.json? require('fugue') fails
+[17:42] narph: other packages work though
+[17:42] augustl: ryah: you happen to know anything about that? According to git blame you wrote the code I'm patching
+[17:42] augustl: ryah: that = accessing the client cert in TLS connections
+[17:42] amerine has joined the channel
+[17:43] F3RR4M3N745 has joined the channel
+[17:43] TooTallNate has joined the channel
+[17:43] F3RR4M3N745: Hey
+[17:45] ceej has joined the channel
+[17:46] Utkarsh has joined the channel
+[17:46] dthompson1 has joined the channel
+[17:47] dthompson2 has joined the channel
+[17:49] dgathright has joined the channel
+[17:49] void_ has joined the channel
+[17:50] confoocious has joined the channel
+[17:50] pyrony has joined the channel
+[17:51] jamesarosen has joined the channel
+[17:52] jamesarosen has joined the channel
+[17:52] davida has joined the channel
+[17:54] Utkarsh_ has joined the channel
+[17:54] Coal has joined the channel
+[17:56] xla has joined the channel
+[17:57] visnup has joined the channel
+[17:58] _schulte_ has joined the channel
+[18:00] patcito has joined the channel
+[18:01] _schulte_: I'm deploying my first (simple) express app, just did a fresh install of node and npm on the server, then (npm install express) all successfullly, however running the app errors with "Cannot find module 'express'" any suggestions?
+[18:01] perezd has joined the channel
+[18:02] ryah: augustl: connection.getPeerCertificate()
+[18:02] tjholowaychuk: _schulte_: I would not use npm to deploy
+[18:03] tjholowaychuk: _schulte_: use something else or use $ npm bundle
+[18:03] tjholowaychuk: if anything
+[18:03] Bioxyde: guys
+[18:03] tbranyen: heh my python is so borked on my desktop that node-waf just spits out errors about namedtuple is non existent
+[18:03] tbranyen: fu arch linux
+[18:03] Bioxyde: Do templating engines like jade/mu/coffekup
+[18:03] eee_c has joined the channel
+[18:03] _schulte_: tjholowaychuk: why is npm not recommended for deployment?  I'll look at npm bundle, thanks
+[18:04] Bioxyde: have a predefined set of HTML tags/attributes
+[18:04] Bioxyde: they support
+[18:04] Bioxyde: or can I add anything?
+[18:04] mikedeboer has joined the channel
+[18:04] Bioxyde: like for example, the tag <blah> (which doesn't exist, obviously).
+[18:04] tjholowaychuk: _schulte_: global libs suck
+[18:04] augustl: cyraxx: oh, how did I miss that.. Thanks
+[18:04] tbranyen: Bioxyde: most template engines don't care what you use
+[18:04] tbranyen: you could be rendering script code as the template for the engine cares
+[18:05] _schulte_: tjholowaychuk: they work for C :)
+[18:05] tanepiper: grr.  Anyone know any reason why this url, http://mt1.google.com/vt/lyrs=m@145&hl=en&x=3&y=6&z=4&s=Galileo, would be valid in the browser but not doing a request against it (either with Curl or node http) ?
+[18:05] tjholowaychuk: _schulte_: barely
+[18:05] tjholowaychuk: lol
+[18:05] aguynamedben has joined the channel
+[18:05] Bioxyde: Tbranyen: Do you think dust is mature enough compared to Mu/Jade/Coffeekup? Here's the link:
+[18:05] Bioxyde: http://akdubya.github.com/dustjs/
+[18:05] zylo has joined the channel
+[18:05] tbranyen: Bioxyde: I only use mustache
+[18:05] Bioxyde: I love it. MVC, simple etc.
+[18:05] tbranyen: i don't see the need for anything else really
+[18:06] tbranyen: mustache has some limitations, but its nearly language agnostic
+[18:06] Bioxyde: I loved dust.
+[18:06] Bioxyde: Well, I think template engines are pretty much similar.
+[18:07] Bioxyde: And I really will only use JavaScript.
+[18:07] deepthawtz has joined the channel
+[18:07] nejucomo has joined the channel
+[18:07] benreesman has joined the channel
+[18:08] kevwil has joined the channel
+[18:08] EyePulp has joined the channel
+[18:12] fairwinds: tjholowaychuk: Behaviour of path is strange. Have value of conn as http://localhost:5984. when I do path.join(conn, '_uuids') gives me http:/localhost:5984/_uuids. I expected similar to python where os.path.join (conn, '_uuids') would give http://localhost:5984/_uuids
+[18:13] fairwinds: note missing slash
+[18:13] fairwinds: https:/ ?
+[18:13] derferman has joined the channel
+[18:13] Utkarsh__ has joined the channel
+[18:13] dahankzter has joined the channel
+[18:13] tjholowaychuk: i did not write path.join(), but its for fs paths
+[18:13] darkredandyellow: I'd like to run node.js and jsdom to get a document, execute all javascript in it (to trigger ajax actions) and parse it as mentioned here: http://blog.dtrejo.com/?tag=nodejs
+[18:13] tjholowaychuk: just concat with '/'
+[18:14] darkredandyellow: could somebody point me to a primer for doing this?
+[18:14] confoocious has joined the channel
+[18:14] confoocious has joined the channel
+[18:15] _schulte_: tjholowaychuk: thanks, npm bundle appears to have worked...
+[18:16] davidc_ has joined the channel
+[18:16] tjholowaychuk: np
+[18:16] fairwinds: tjholowaychuk: sure, is what I am doing. I consider this a bug, should I report it as such?
+[18:17] jiggliemon has joined the channel
+[18:17] jiggliemon: 500 members.  Woo!
+[18:17] tjholowaychuk: fairwinds: I wouldnt, like I said it is for file system paths
+[18:17] tjholowaychuk: not urls
+[18:17] jiggliemon: How would I do a Base64 on file contents?
+[18:18] jiggliemon: an image specificly.
+[18:20] zzak has joined the channel
+[18:20] zzak has joined the channel
+[18:21] bingomanatee has joined the channel
+[18:23] ncb000gt: jiggliemon: read the file into a buffer and tostring it with an encoding of 'base64'
+[18:23] jiggliemon: Node out of the box will read a file?  or do i need a File handeling module?
+[18:23] jiggliemon: Sorry, Im pretty fresh.
+[18:24] lukegalea: jiggliemon: you pretty much can't do anything without requiring modules.. but it's included with the node distro. just look at the "fs" docs.
+[18:24] darkredandyellow: ACTION sighs
+[18:24] ncb000gt: jiggliemon: np. :) var fs = require('fs'); will import the native module
+[18:24] darkredandyellow: sudo npm install jsdom -> gives me:  FATAL ERROR: CALL_AND_RETRY_2 Allocation failed - process out of memory
+[18:25] darkredandyellow: if this doesnt sound like a nasty bug, what does
+[18:25] ncb000gt: jiggliemon: http://nodejs.org/docs/v0.4.0/api/fs.html
+[18:25] ncb000gt: jiggliemon: and http://nodejs.org/docs/v0.4.0/api/buffers.html
+[18:25] jiggliemon: ncb000gt: Thanks.  I'll look into that.  I heard there was some issues with regards to file handeling in node.js.  
+[18:26] ncb000gt: jiggliemon: such as?
+[18:26] jiggliemon: Nothing concrete.  And i can't even remember the specific issue, Something I/O comes to mind though.
+[18:27] mattly has joined the channel
+[18:27] milez has joined the channel
+[18:27] Country has joined the channel
+[18:28] jiggliemon: I should research it a little more before I start throwing flags.
+[18:28] steffkes has joined the channel
+[18:28] jiggliemon: Thanks ncb000gt I'll look into this fs module.
+[18:28] ncb000gt: np
+[18:29] msch has joined the channel
+[18:30] colinclark has joined the channel
+[18:30] eee_c has joined the channel
+[18:30] dguttman has joined the channel
+[18:32] abraham has joined the channel
+[18:32] masondesu has joined the channel
+[18:32] nonnikcam has joined the channel
+[18:32] joel_clark has joined the channel
+[18:33] dthompson has joined the channel
+[18:33] liar has joined the channel
+[18:34] noahcampbell has joined the channel
+[18:37] nrub has joined the channel
+[18:38] joel_clark has joined the channel
+[18:39] broofa has joined the channel
+[18:39] __tosh has joined the channel
+[18:39] admc has joined the channel
+[18:39] msch has joined the channel
+[18:43] beta_ has joined the channel
+[18:43] pHcF has joined the channel
+[18:44] sholmes has joined the channel
+[18:44] fumanchu182 has joined the channel
+[18:45] richcollins has joined the channel
+[18:47] jklabo has joined the channel
+[18:47] ryah: piscisaureus: yt?
+[18:48] ryah: where is your send() from?
+[18:48] siculars has joined the channel
+[18:49] jklabo: I am doing ./configure and I am missing some of the requirements: https://gist.github.com/832356, but it still makes and installs succesfully. Is that a problem?
+[18:50] Evet_ has joined the channel
+[18:50] dmcquay has joined the channel
+[18:50] ryah: jklabo: no
+[18:50] jklabo: could it cause errors later on?
+[18:50] ryah: they're not necessarally requirements
+[18:50] ryah: e.g.Checking for header sys/inotify.h
+[18:51] ryah: inofity is only on linux
+[18:51] jklabo: ok, cool. thanks
+[18:51] mraleph has joined the channel
+[18:53] EyePulp: so what are the typical deployment routes for running node in production?  put it behind nginx, or run it on its own as a daemon under something like supervisor?  neither? both? =)
+[18:54] mattly has joined the channel
+[18:54] mjr_ has joined the channel
+[18:54] ryah: EyePulp: you need some sort of suprervisor process
+[18:54] lukegalea: I'm using spark2 with success.
+[18:54] msch has joined the channel
+[18:55] lukegalea: but I hear "cluster" replaces that..
+[18:55] bingomanatee has left the channel
+[18:55] davidascher has joined the channel
+[18:55] EyePulp: I started writing a supervisor conf file and then thought I should ask
+[18:55] dgathright has joined the channel
+[18:55] CIA-39: node: 03Bert Belder 07v0.4 * ra5e67ad 10/ (deps/v8/SConstruct deps/v8/src/SConscript wscript): 
+[18:55] CIA-39: node: Autodetect no-strict-aliasing, propagate toolchain option to SCons
+[18:55] CIA-39: node: BUG=v8:884 - http://bit.ly/hJ0XMj
+[18:56] CIA-39: node: 03Bert Belder 07v0.4 * r8743212 10/ deps/libev/ev.c : Make libev work on MinGW again - http://bit.ly/hZpkqv
+[18:56] CIA-39: node: 03Bert Belder 07v0.4 * r25ce501 10/ tools/test.py : Fix test runner bug on windows - http://bit.ly/dUH7xB
+[18:56] MikhX has joined the channel
+[18:58] pedrobelo has joined the channel
+[19:00] isaacs has joined the channel
+[19:01] mattly has joined the channel
+[19:02] visnup: EyePulp: I've just been using monit
+[19:02] langworthy has joined the channel
+[19:03] blueadept has joined the channel
+[19:03] muk_mb has joined the channel
+[19:03] tjholowaychuk: EyePulp: http://learnboost.github.com/cluster/
+[19:03] tjholowaychuk: releasing a new version pretty soon today
+[19:04] possibilities has joined the channel
+[19:04] nivoc has joined the channel
+[19:05] dspree has joined the channel
+[19:05] dspree has joined the channel
+[19:06] EyePulp: tjholowaychuk: don't I still need some daemonizing setup to wrap it up, even if I'm using cluster? 
+[19:07] tjholowaychuk: EyePulp: yeah, or nohup if you are lazy
+[19:07] tjholowaychuk: depends on how important your project is haha
+[19:07] tjholowaychuk: just chuck monit on the master pid
+[19:07] Blackguard has joined the channel
+[19:07] CIA-39: node: 03Ryan Dahl 07v0.4 * r7e4f755 10/ wscript : Install node.d in the correct place - http://bit.ly/i16vXf
+[19:08] derferman has joined the channel
+[19:08] EyePulp: is monit similar to supervisor? (haven't used monit before - reading up now)
+[19:09] tjholowaychuk: i think supervisor is meant for reloading during development
+[19:09] tjholowaychuk: i dunno
+[19:09] visnup: EyePulp: it's an oldish unix util that's been around for a while that just keeps daemons up
+[19:09] lukegalea: EyePulp: it can monitor memory usage, etc
+[19:10] lukegalea: and kill if it exceeds a threshold, etc..
+[19:10] mies has joined the channel
+[19:10] EyePulp: that *sounds* similar to http://supervisord.org/
+[19:10] ryah: http://nodecamp.de/
+[19:11] ryah: \o/
+[19:11] visnup: ryah: nice, you going and making joyent pay?
+[19:11] ryah: (ich bin auch da) 
+[19:11] ryah: visnup: yeah :)
+[19:12] bentruyman has joined the channel
+[19:13] dshaw has joined the channel
+[19:13] Phyllio has joined the channel
+[19:13] visnup: nice!
+[19:14] __tosh has joined the channel
+[19:14] mraleph: ryah: \o/
+[19:15] mraleph: now I can have a beer with you guys
+[19:15] kevwil has joined the channel
+[19:15] ryah: mraleph: schoen
+[19:16] void_ has joined the channel
+[19:16] srid has joined the channel
+[19:16] srid has joined the channel
+[19:17] mraleph: ryah: nicht verstehen; that's one of the few german phrases/words I know :-) 
+[19:18] _schulte_: Just finished my first real use of JS (w/node), if anyone has any style suggestions I'd be happy to hear them; https://github.com/eschulte/survey.js/blob/master/app.js
+[19:20] MikhX has joined the channel
+[19:22] ncb000gt: _schulte_: that just opens up a crazy can of worms...asking for opinions on style :)
+[19:22] ncb000gt: oh god...the code is naked, where are your semi-colons?!?
+[19:22] _schulte_: ncb000gt: fair enough, just figured if I was doing anything *really* egregious it would be nice to know
+[19:22] ncb000gt: ACTION ducks
+[19:23] ncb000gt: _schulte_: :) sure
+[19:23] _schulte_: I thought those were optional
+[19:23] ncb000gt: _schulte_: see what i mean ;D
+[19:23] tosh has joined the channel
+[19:23] _schulte_: point made :)
+[19:24] aklt has joined the channel
+[19:24] ncb000gt: _schulte_: and yes, in almost all cases they are optional.
+[19:25] ncb000gt: the only comment I have, which is based on personal pref. is just to move helper functions out of your server code to a separate file and then include them as a module.
+[19:25] _schulte_: ncb000gt: alright, well if that's the worst, then it's good to know I'm not setting anything on fire
+[19:25] ncb000gt: so decode, input, to_form would be in a different file
+[19:26] _schulte_: ncb000gt: agreed, that would be an improvement, and I could include it with require('./utility.js') or somesuch?
+[19:26] ncb000gt: _schulte_: exactly that
+[19:26] ncb000gt: oh sorry
+[19:26] ncb000gt: require('utility')
+[19:27] mraleph: ryah: I just need to manage and grab a ticket before the event sells out in one minute :-)
+[19:27] _schulte_: that's one point I don't entirely get, var foo = require('foo') is required to protect namespaces, and then require automatically associates all global objects in foo with the foo variable?
+[19:27] ncb000gt: _schulte_: another note is that many people tend to do things using callbacks
+[19:28] _schulte_: ncb000gt: where did I miss a callback oportunity?
+[19:28] ncb000gt: so instead of using res.send(to_form(decode(specs))) you could do something like to_form(decode(specs, function(data) {res.send(data);})
+[19:28] ncb000gt: or something similar
+[19:29] ryah: mraleph: you'll get a ticket
+[19:29] davidr has joined the channel
+[19:29] ncb000gt: nothing really gained by doing either in this case
+[19:29] felixge has joined the channel
+[19:29] felixge has joined the channel
+[19:29] _schulte_: ncb000gt: oh, odd, go to know though, thanks
+[19:29] ryah: mraleph: erik too if he wants to come
+[19:29] felixge: ryah: so you're coming to nodecamp.de ?
+[19:29] Remoun has joined the channel
+[19:29] davidr: I'm having a problem starting simpleserver.js. I'm wondering if someone can help
+[19:29] ryah: felixge: ja!
+[19:29] wilken has joined the channel
+[19:30] felixge: ryah: fantastic! :)
+[19:30] davidr: when I run it, I get node.js:116, throw e;
+[19:30] davidr: process nextTick error
+[19:30] mraleph: ryah: heh. I will ask him.
+[19:31] cognominal has joined the channel
+[19:31] davidr: I get back "Error: Cannot find module ... simpleserver.js"
+[19:32] _schulte_: davidr: maybe try removing the .js when requiring simpleserver?
+[19:32] huntz0r has joined the channel
+[19:33] nu- has joined the channel
+[19:33] davidr: schulte - how do I do that?
+[19:33] felixge: mraleph: I send you a PM, let me know if you got it
+[19:33] ncb000gt: qq - does anyone know of a good avro connector for node?
+[19:34] __tosh has joined the channel
+[19:34] _schulte_: davidr: the error report should include a line number and file name, so if you should be able to use that to track down the offending bit of the file, then just edit that file to remove the ".js" from inside the require statement, although I'm noob at this, so take my advice with a grain of salt...
+[19:35] hosh_work has joined the channel
+[19:36] nefD has joined the channel
+[19:36] throughnothing has joined the channel
+[19:37] aaronblohowiak has joined the channel
+[19:37] mikeal has joined the channel
+[19:37] jklabo has joined the channel
+[19:37] mjr_: wow, nodecamp.de
+[19:37] mikeal: that is awesome
+[19:37] Coal has joined the channel
+[19:38] mikeal: it's awesome because it's in Cologne :)
+[19:38] davidr: Thanks (schultze). 
+[19:38] wankdanker: does anyone know what exactly causes a Readable Stream to emit its .on('data') event? ie: buffer full? end of line? other?
+[19:38] dthompson1 has joined the channel
+[19:38] mikeal: wankdanker: it happens when the syscal for fsread returns
+[19:38] mikeal: there is not in memory buffer of data
+[19:39] mikeal: once it is returned from the kernel it's emitted
+[19:39] wankdanker: even from a child process?
+[19:39] bentruyman has joined the channel
+[19:40] wankdanker: i should say.. the child process stdout stream
+[19:40] aaronblohowiak: What is the current state of thinking WRT MinGW vs Cygwin
+[19:40] mjr_: There is a read in that case as well
+[19:41] mjr_: mraleph: is your V8 crew going to represent at nodecamp.de?
+[19:42] mraleph: mjr_: I will talk to the rest of the team, maybe somebody decides to talk.
+[19:43] mraleph: mjr_: I am a bit reluctant to do that myself because speaking english for me is more difficult than typing it :-)
+[19:44] jetheredge has joined the channel
+[19:44] mjr_: mraleph: it'd be great for you or others on the V8 team to drop some of your deep knowledge on the node community.  
+[19:44] mjr_: Help us figure out what is fast, slow, etc.
+[19:44] deepthawtz has joined the channel
+[19:45] jetienne: idea++
+[19:45] v8bot:  jetienne has given a beer to idea. idea now has 1 beers.
+[19:45] piscisaureus: ryah: my send is from winsock
+[19:45] mraleph: well I think it is more important to help people understand measuring performance instead of explaining what is fast and what is slow.
+[19:45] tranqenstein has joined the channel
+[19:46] mjr_: mraleph: yeah, that's what I spend a lot of time on as well.
+[19:46] piscisaureus: ryah: http://lists.schmorp.de/pipermail/libev/2010q4/001189.html
+[19:46] felixge: mjr_: I think having a talk about the v8 internals would be the most exciting : )
+[19:46] felixge: like understanding how the GC operates
+[19:46] mjr_: absolutely
+[19:46] piscisaureus: ^- the thread, not the post
+[19:46] mjr_: It's all just so magical.
+[19:46] pquerna: +1
+[19:47] mjr_: In browserland, I'm content to not understand the magic, but when writing servers, it ends up mattering.
+[19:48] jetienne: more links between node and v8 people is a natural thing to do
+[19:48] brianc: but know what exactly is fast and slow only works until they change v8.  Maybe what is slow today will be fast next week?
+[19:49] mraleph: brianc: that's exactly my point. 
+[19:49] bradleymeck: many people want to try to keep from being too ingrained to v8, wasnt there a spidermonkey guy that wondered if providing a nicer api would mean node could support it?
+[19:49] fizx has joined the channel
+[19:49] mraleph: given infinite amount of time spent on improving v8 almost everything should be fast :-) 
+[19:50] mraleph: even evil things like with
+[19:50] tjholowaychuk: i used to think with() was read only
+[19:51] tjholowaychuk: kinda retarded that it is not
+[19:51] tjholowaychuk: :S
+[19:51] tjholowaychuk: figured it was just a scoping thing
+[19:51] piscisaureus: ryah: can I come to nodecamp.de?
+[19:51] tfe_ has joined the channel
+[19:51] tfe_ has joined the channel
+[19:51] swistak has joined the channel
+[19:51] felixge: piscisaureus: you should come, were are you located?
+[19:52] piscisaureus: delft, the netherlans
+[19:52] mikeal: bradleymeck: Mozilla wants to find someone to emulate the v8 layer in SM and bind to node
+[19:52] mikeal: if you're interested you should talk to shaver and brendan
+[19:52] felixge: piscisaureus: what would it take to get you there? Covering your travel expenses?
+[19:52] bradleymeck: ive got a job already lol, id be interested but dont have time
+[19:52] piscisaureus: erm well I can pay those
+[19:52] walkah has joined the channel
+[19:53] piscisaureus: what is the entry fee?
+[19:53] jetienne: mraleph: what interest people here is "how can i make my own node.js code fast ?" so what should i measure ? if this is slow, what does this mean ? who should i poke to get it improved... this kind of things. im sure v8 people can do that talk :)
+[19:53] felixge: piscisaureus: Nothing if you decide to present, which you should :)
+[19:53] piscisaureus: heh sounds fun
+[19:53] felixge: piscisaureus: otherwise it's going to be very affordable << 100 EUR I think
+[19:53] piscisaureus: but about what
+[19:53] felixge: piscisaureus: porting node to windows? *g*
+[19:54] piscisaureus: heh yeah maybe but hopefully there will be nothing to talk about
+[19:54] felixge: and don't tell me that's not exciting, you should have thought about that before working on it
+[19:54] felixge: :)
+[19:54] mraleph: jetienne: well. yes I actually have a draft of this kind of talk. 
+[19:54] jetienne: mraleph: you are already halfdone! excelent :)
+[19:54] piscisaureus: I will think about it. There's some time still before june
+[19:55] felixge: piscisaureus: I think you'd be more than qualified to give a general node internals talk as well
+[19:55] felixge: I'd find it very exciting
+[19:55] piscisaureus: I think that that could be done
+[19:55] piscisaureus: as long as it's not about tls :O
+[19:55] piscisaureus: but I will be there anyway
+[19:55] mraleph: jetienne: but people usually expect some magical solution, a dark secret technique that allows to make every single node.js app 10x times faster.
+[19:55] felixge: piscisaureus: you get to decide that
+[19:55] felixge: piscisaureus: but I think you can consider yourself invited as a speaker (I'm helping a tiny bit with the organization)
+[19:56] piscisaureus: But hopefully I will not be to late to register because I heard nodeconf was sold out in what? 5 minuts?
+[19:56] piscisaureus: ok
+[19:56] felixge: piscisaureus: email me / tim / michael (see nodecamp.de for their emails) when you know what topic you'd like
+[19:56] piscisaureus: felixge: thanks. I will think about an interesting talk
+[19:56] felixge: piscisaureus: I will make sure you get in.
+[19:56] piscisaureus: :-)
+[19:56] felixge: piscisaureus: again, you won't need a ticket if you present
+[19:56] aaronblohowiak: mraleph: there is such a technique: reduce, reuse, recycle
+[19:56] bradleymeck: as much as i would love to compete w/ C in speed i dont think we can get that 10x speed boost from something simple
+[19:56] jetienne: mraleph: part of 'your job' is to explain them how v8 teams see it. not a magical wand they want to hear. this is about getting actual links between node.js community and v8 team. in my opinion at least
+[19:57] mraleph: aaronblohowiak: yes. make your app an empty app.js file. it's infinitely fast… 
+[19:58] aaronblohowiak: mraleph: it is the empty space inside a pitcher that makes it useful
+[19:58] aaronblohowiak: Om....
+[19:58] JamieD has joined the channel
+[19:58] felixge: mraleph: I would listen to just about anything you decide to talk about, so you shouldn't be worried :)
+[19:58] jetienne: well do an empty.java and this is not infinitly fast :)
+[19:59] Jaye_: lol java is never going to live down the poor early performance... =/
+[20:00] JamieD: hi all, I'm new to node and I'm having an issue when trying to require and modules, I get errors like Error: Cannot find module 'optimist'. I have node 0.4 and npm 0.3.0-6 installed and have the relevant modules installed.
+[20:00] noahcampbell has joined the channel
+[20:00] ncb000gt: JamieD: did you install optimist?
+[20:00] jetienne: npm list will tell you if you got it
+[20:00] mraleph: *Knock, knock* - Whos there? (…long pause…) - Java
+[20:00] ncb000gt: JamieD: if so, did you use npm?
+[20:00] davglass has joined the channel
+[20:01] ncb000gt: mraleph: low blow
+[20:01] ncb000gt: :)
+[20:01] JamieD: ncb000gt: yes npm install optimist
+[20:01] JamieD: I suspect it may be a path/permissions issue with npm
+[20:01] jetienne: $ touch /tmp/bla.js && time node /tmp/bla.js
+[20:02] jetienne: real	0m0.026s
+[20:02] mraleph: ncb000gt: I did work on JVM before working on V8, so I actually know that Java can be as fast as C if used right :-)
+[20:02] Jaye_: i was surprised when i saw recent benchmarks, almost makes me want to use haskell
+[20:03] Jaye_: fuck i mean clojure
+[20:03] aaronblohowiak: jetienne: npm list --installed
+[20:03] bradleymeck: mraleph im not sure all of the design patterns in java lead towards that though
+[20:03] vipaca: Just wondering what everyones using as a build tool. I see some make primarily with an assortment of rake, cake, and others?
+[20:03] JamieD: npm ls installed shows the modules I am trying to use. although npm was installed using sudo and I have to run sudo when installing new modules. could that be whats stopping node from finding the modules?
+[20:03] jetienne: aaronblohowiak: ok tell that to JamieD
+[20:03] tjholowaychuk: vipaca: make
+[20:03] vipaca: Also is there npm packging tool?
+[20:04] isaacs: vipaca: npm IS a packaging tool :)
+[20:04] aaronblohowiak: tjholowaychuk++
+[20:04] v8bot:  aaronblohowiak has given a beer to tjholowaychuk. tjholowaychuk now has 15 beers.
+[20:04] mraleph: bradleymeck: well in a sense design patterns of node might not always play well with v8 as well.
+[20:04] vipaca: tjholowaychuk This is what I was going to use assuming you can write c-extension for v8 and node
+[20:04] isaacs: JamieD: works for me.
+[20:04] bradleymeck: mraleph true :), especially if coroutines somehow make it into there
+[20:04] isaacs: JamieD: what version of npm/node/optimist?
+[20:05] JamieD: is there an npm environment command equivalent to rubys "gem environment"?
+[20:05] isaacs: JamieD: npm config ls
+[20:05] zomgbie has joined the channel
+[20:05] __tosh has joined the channel
+[20:06] felixge: isaacs: about this sudo npm thing: You should have just admitted that your plans was to take over all machines running node.js to begin with :)
+[20:06] vipaca: isaacs: so npm is a node package manager, but is it a package builder
+[20:06] felixge: * plan
+[20:06] JamieD: isaacs: thx, my config https://gist.github.com/832554
+[20:07] yozgrahame has joined the channel
+[20:07] MikhX has joined the channel
+[20:07] NickP: tjholowaychuk: is there a TM bundle for syntax highlighting for jade / stylus?
+[20:07] isaacs: vipaca: node packages are super simple.
+[20:07] isaacs: vipaca: just a folder with a package.json in it.
+[20:08] tjholowaychuk: NickP: stylus has one in ./editors/Stylus.tmbundle
+[20:08] tjholowaychuk: NickP: make install-bundle
+[20:08] isaacs: vipaca: npm bundles them up and sends them to the registry
+[20:08] tjholowaychuk: jade has one too, there is a link to it in the readme
+[20:08] felixge: When I google "node.js" there is an add saying: "Netflix is Hiring".
+[20:08] NickP: thanks TJ
+[20:08] felixge: "Netfliex needs experts in Node JS"
+[20:08] isaacs: JamieD: ok.  what's `sudo npm config ls`?
+[20:08] felixge: wondering if this is a weird keyword combination, or if they indeed plan to use some node
+[20:08] felixge: :)
+[20:08] bradleymeck: mmmm working for netflix would be cool
+[20:09] Bonuspunkt: btw is there somewhere a "npm for dummies"ls
+[20:09] vipaca: isaacs: Is there the possibiltiy to do a private npm repo
+[20:09] Bonuspunkt: *tutorial?
+[20:09] isaacs: Bonuspunkt: `npm faq`
+[20:09] isaacs: vipaca: `npm help registry` (yes)
+[20:09] isaacs: Bonuspunkt: or `npm help`
+[20:10] Jaye_: hey tj what happened to the client side implementation of jade? abandoned by maintainer?
+[20:10] tjholowaychuk: Jaye_: yeah
+[20:10] tmzt: if browserling works there may not need to be one
+[20:10] Jaye_: hmm
+[20:10] piscisaureus: felixge: how long should such a talk be?
+[20:10] piscisaureus: (never done anything like it before honestly)
+[20:10] felixge: piscisaureus: no idea. My guess is 30-45m
+[20:11] JamieD: isaacs: only diff with sudo is group = "20" vs group = 20 and tmproot is a different location
+[20:11] felixge: piscisaureus: ryah wasn't supposed to announce nodecamp.de yet
+[20:11] felixge: piscisaureus: :)
+[20:12] strmpnk has joined the channel
+[20:13] warz has joined the channel
+[20:14] Jaye_: tmzt: it does not work right away, just chcked, but i think it might with a bit of fiddling
+[20:14] felixge: ACTION signing off
+[20:15] tmzt: anybody know why mongo-node would report that it saved somethng but the db is not updated?
+[20:15] bradleymeck: Jaye_ the port isnt too hard, but the big thing is the f'ing require function
+[20:16] Jaye_: ya just hit "cannot find module.." :P
+[20:17] tmzt: bradleymeck: substack has one of those too which doesn't require ajax loading
+[20:17] JamieD: isaacs: interestingly, if I download the latest tar of npm and try to install it I get... Error: Cannot find module 'semver'
+[20:17] bradleymeck: tmzt the problem is blocking, making stuff work isnt too bad, but you cant block at the right time
+[20:17] ossareh has joined the channel
+[20:17] tmzt: blocking?
+[20:17] isaacs: JamieD: what version of node
+[20:17] isaacs: ?
+[20:18] bradleymeck: require() blocks until it is done
+[20:18] JamieD: isaacs: 0.4.0
+[20:18] isaacs: hmm...
+[20:18] tmzt: ah
+[20:18] Jaye_: since its a view engine if you block then the UI will freeze up, users be mad
+[20:18] isaacs: JamieD: define "download the latest tar of npm"?
+[20:18] isaacs: do you mean, from github?
+[20:18] tmzt: he's preprocessing the js file to include the modules and using require as a kind of cache lookup, I don't know how much blocking would be a problem
+[20:18] JamieD: isaacs: I clicked the Get the code. link on npmjs.org
+[20:19] isaacs: JamieD: hm...
+[20:19] tmzt: jade with live substitution changes would be awesome though
+[20:19] isaacs: ah.. right, tha'ts broken.
+[20:19] JamieD: do I want an older version, or newer?
+[20:19] unomi has joined the channel
+[20:20] tmzt: anybody know why the result sent to the callback in mongo-node save wouldn't match the contents of the database?
+[20:20] strmpnk_ has joined the channel
+[20:20] aklt has joined the channel
+[20:21] isaacs: JamieD: you need to get the submodules
+[20:21] isaacs: JamieD: updated instructions
+[20:21] isaacs: JamieD: you can do git clone, and then `git submodule update --init`
+[20:21] JamieD: isaacs: ok, I'll give that a run
+[20:23] JamieD: isaacs: should npm install ok if I run make install without sudo?
+[20:24] isaacs: JamieD: no, probably won't.
+[20:24] isaacs: JamieD: if you absolutely must do this, put `unsafe-perm = true` in ~/.npmrc
+[20:24] ncb000gt: mraleph: cool. i was just starting stuff. :)
+[20:25] Bonuspunkt: isaacs i installed a package (npm install openid) how do i use it in node? require('openid') doesnt work (cannot find module 'openid')
+[20:25] JamieD: isaacs: ok, I installed with sudo ;) see if this fixes my require problem
+[20:25] ncb000gt: JamieD: sorry, someone came by. did you get your question answered?
+[20:25] isaacs: Bonuspunkt: looking into it
+[20:25] altamic has joined the channel
+[20:25] JamieD: ncb000gt: no worries, still working on it, isaacs is giving me a hand
+[20:25] Nohryb has joined the channel
+[20:26] ncb000gt: JamieD: good deal
+[20:26] ph^ has joined the channel
+[20:26] ncb000gt: Bonuspunkt: are you sure the install worked? did npm output "npm ok" at then of the install?
+[20:26] JamieD: isaacs: can I install modules without the need for sudo, or is that not advisable either?
+[20:27] isaacs: Bonuspunkt: reproducing.  not sure why
+[20:27] isaacs: JamieD: not advisable.  but, if you want, then point your root, binroot, and manroot at user-owned folders, and set the `unsafe-perm` flag
+[20:28] Bonuspunkt: isaacs yes i got npm ok
+[20:28] sooli has joined the channel
+[20:28] isaacs: yeah, it installs, i'm not sure why node isn't require()ing it properly
+[20:28] ncb000gt: isaacs: when did that change? i thought using sudo was still being discouraged.
+[20:28] Me1000 has joined the channel
+[20:28] isaacs: the package.json has a main flag
+[20:28] isaacs: ncb000gt: npm 0.3.0
+[20:28] JamieD: isaacs: humm, still no dice, installed npm as sudo, installed optimist as sudo and when I run my script still getting Error: Cannot find module 'optimist'
+[20:28] ncb000gt: isaacs: ok, thought so
+[20:28] isaacs: ncb000gt: it downgrades perms now for package scripts
+[20:29] isaacs: JamieD: what's require.paths, and what's npm config get root
+[20:29] isaacs: JamieD: ie, do `require.paths` in the node repl
+[20:29] ncb000gt: isaacs: yea, i saw that, just wanted to make sure i didn't recommend the wrong things
+[20:29] isaacs: what's that say?
+[20:29] isaacs: ncb000gt: your heart is in a good place :)
+[20:29] stuross has joined the channel
+[20:30] JamieD: isaacs: [ '/Users/JamieD/.node_modules', '/Users/JamieD/.node_libraries', '/usr/local/lib/node' ]
+[20:30] isaacs: JamieD: and npm config get root, that's /usr/local/lib/node?
+[20:30] JamieD: isaacs: no thats /Users/JamieD/.node/node_libraries
+[20:31] isaacs: JamieD: oh, ok, well there's your issue :)
+[20:31] JamieD: isaacs: yay, so how do I change the path?
+[20:31] isaacs: JamieD: add this to your bashrc or whatever:  NODE_PATH=/Users/JamieD/.node/node_libraries
+[20:31] hij1nx has joined the channel
+[20:31] isaacs: er, export NODE_PATH=whatever
+[20:31] isaacs: need the "export"
+[20:32] JamieD: isaacs: sweet, it's working now :) thanks for the help, much appreciated
+[20:32] isaacs: hooray!!
+[20:33] isaacs: :D
+[20:33] Gruni has joined the channel
+[20:33] JamieD: it's always a bit weird when starting out with a new set of tools
+[20:35] Jaye_: tmzt: got it working, but not through npm, shame :(
+[20:35] Jaye_: in browserify i mean
+[20:36] cronopio has joined the channel
+[20:36] isaacs: Bonuspunkt: Aha!  openid's json isn't valid.
+[20:36] isaacs: derp.
+[20:38] isaacs: JamieD: especially when the tools are right in the middle of a significant change :)
+[20:38] altamic has joined the channel
+[20:38] altamic has joined the channel
+[20:39] JamieD: isaacs: I'm used to that, I'm a ruby developer and everythings always changing :)
+[20:39] b_erb has joined the channel
+[20:39] richcollins has joined the channel
+[20:39] miccolis has joined the channel
+[20:40] BillyBreen has joined the channel
+[20:40] mikeal has joined the channel
+[20:40] sirkitree|lunch has joined the channel
+[20:41] jamesarosen has joined the channel
+[20:42] mikeal has joined the channel
+[20:45] MikhX has joined the channel
+[20:45] hij1nx_ has joined the channel
+[20:47] piscisaureus: oh ryah, cygwin landed today
+[20:47] jdrannbauer has joined the channel
+[20:47] christophsturm has joined the channel
+[20:47] Evet has joined the channel
+[20:49] beawesomeinstead has joined the channel
+[20:50] Evet has joined the channel
+[20:50] ryah: piscisaureus: awesome!
+[20:50] ryah: thank god.
+[20:50] piscisaureus: thank mraleph
+[20:50] mraleph: thank Bert :-)
+[20:51] MikhX_ has joined the channel
+[20:51] JamieD: humm, I'm trying to use twbot (https://github.com/yssk22/node-twbot) and getting the error "Error: Cannot find module 'twbot'". It's installed and listed but it can't find it
+[20:51] mraleph: I just read it through and pushed the button.
+[20:52] piscisaureus: well that's what we pay for for :p
+[20:52] piscisaureus: ryah: I'm not doing any libev patches any more. I found another rather anal bug. Instead Im sprinting iocp
+[20:53] mraleph: but my god. why anybody would want to use cygwin? I was urging to smash my monitor with a hummer for the past two days.
+[20:54] softdrink: does anyone know if there's a way to combine using the attr() value and url() in css?  i want to do something like:  background-image: url("x/y/z"attr(data-bob)".gif")
+[20:55] ryah: piscisaureus: well - let's talk about it first
+[20:55] tjholowaychuk: softdrink: not sure since url() is a special case (stupid css)
+[20:55] ryah: piscisaureus: namely where the c/js boundary is
+[20:57] maushu has joined the channel
+[20:57] softdrink: ideally i want to set the background image to:   "/avatars/" + attr(userID) + ".png"  or something along those lines
+[20:57] piscisaureus: ryah: anytime, when you have time
+[20:58] warz: softdrink, can you not do that directly in your markup, on the element?
+[20:58] Coal has joined the channel
+[20:58] tjholowaychuk: softdrink: try it :) let me know, im curious
+[20:58] bradleymeck: tjholowaychuck, what isnt a special case in css?
+[20:58] tjholowaychuk: softdrink: AFAIK url(attr()) could be a valid url, as dumb as that is
+[20:58] tjholowaychuk: bradleymeck: haha, yeah
+[20:58] tjholowaychuk: its a brutal language
+[20:59] tjholowaychuk: maybe not brutal, but bad
+[20:59] bradleymeck: dictionary state dependant context dependant mappings!
+[20:59] fizx has joined the channel
+[20:59] softdrink: basically i have:   <div class="task" data-assignedTo="some-user-guid">....
+[20:59] softdrink: ACTION experiments
+[20:59] pieterv has joined the channel
+[21:00] stuross: anybody have any experience running geolocation queries in mongoose?
+[21:00] jimt_ has joined the channel
+[21:00] JamieD: is the "engine" attribute required in package.json?
+[21:00] bradleymeck: no
+[21:01] softdrink: damnit. it actually interpreted the url as "attr(data-assignedTo)"… that exact string
+[21:01] tjholowaychuk: softdrink: hah, knew it
+[21:01] tjholowaychuk: lame
+[21:01] softdrink: fuuuuuu
+[21:01] Roconda has joined the channel
+[21:01] francescop has joined the channel
+[21:01] mraleph: ryah: btw. I thought a bit about your fast long stack-traces. if you are willing to sacrifice precision and go "dirty" way you can do the following: memcpy top of the stack (say 100 words), then offload it's decoding into a separate thread. it should be pretty safe to do that decoding without sync, it mostly depends on immutable data, the only thing you need to catch is GC… do you plug a small syncronization barrier into GC prologue that either 
+[21:01] softdrink: ok, plan Q....
+[21:01] tjholowaychuk: whoever decided a non-string would be valid should be shot
+[21:02] ryah: mraleph: i'd just do the copy in c
+[21:02] francescop has left the channel
+[21:04] mraleph: after you did a copy you need to decode it somehow before gc invalidates interesting parts
+[21:05] fizx has left the channel
+[21:06] MikeMakesIt has joined the channel
+[21:09] jimt has joined the channel
+[21:14] jimt_ has joined the channel
+[21:14] void_ has joined the channel
+[21:15] ajashton has joined the channel
+[21:17] atmos has joined the channel
+[21:18] atmos: are there any libraries for doing time ago in words style stuff
+[21:18] atmos: basically take a Date object and say "1 day 6 hours 5 minutes ago"
+[21:19] coobr has joined the channel
+[21:19] EyePulp: atmos:  http://www.datejs.com/
+[21:20] bradleymeck: isaacs would the '-' in node-ffi cause issues when requiring it for some reason?
+[21:23] robotarmy has joined the channel
+[21:24] sooli has joined the channel
+[21:26] isaacs has joined the channel
+[21:27] kollektiv has joined the channel
+[21:27] dthompson has joined the channel
+[21:27] tjholowaychuk: does npm not work with 0.2.x anymore?
+[21:27] isaacs: tjholowaychuk: nope.
+[21:27] Kingdutch has joined the channel
+[21:27] tjholowaychuk: oh
+[21:28] tjholowaychuk: awesome
+[21:28] isaacs: tjholowaychuk: it depends on the node_modules and setting the uid/gid in child processes
+[21:28] walkah: sadly it doesn't seem to work with 0.4.0 either :P
+[21:28] isaacs: walkah: so, it definitely *should* work on 040
+[21:28] tjholowaychuk: will revert to an older version i guess
+[21:28] isaacs: bradleymeck: not sure what you mean.
+[21:28] walkah: isaacs: npm install jerk (e.g.) on 0.4.0 / 0.3.0-6 on osx just hangs 
+[21:28] walkah: at tar
+[21:29] atmos: EyePulp: have you used the datejs npm package ?
+[21:29] tjholowaychuk: ACTION should not have updated
+[21:29] isaacs: walkah: sudo!!!
+[21:29] bradleymeck: nm, found the issue, node-ffi didnt use `main` in package.json on 0.4.0
+[21:29] isaacs: walkah: sudo npm install jerk
+[21:29] isaacs: walkah: and/or `npm cache clean` to remove old stuff
+[21:29] EyePulp: atmos - nope
+[21:29] atmos: yeah, doesn't seem to work :\
+[21:29] walkah: isaacs: i'll give both a shot and let ya know 
+[21:29] intrect has joined the channel
+[21:29] isaacs: bradleymeck: yep, that's another thing. no more module mapping.  no more shims.  specify a main, that's it.
+[21:29] isaacs: bradleymeck: more of the module loading stuff was moved into node-core, and cleaned up and simplified in the process.
+[21:29] atmos: ACTION turned that sudo shit off
+[21:29] bradleymeck: although some odd stuff trying to fix to get node-bigint working
+[21:31] bradleymeck: substack you there?
+[21:33] dgathright has joined the channel
+[21:33] walkah: isaacs: after a sudo npm cache clean, sudo install npm jerk still fails here:
+[21:34] walkah: npm verb success tar "-mvxpf" "-" "-C" "/tmp/npm-1297978338683/1297978338683-0.9307855712249875/contents"
+[21:34] tjholowaychuk: does EventEmitter have removeAllListeners() without an event?
+[21:34] tjholowaychuk: or do you have to supply the event
+[21:34] isaacs: walkah: ok, so.. that's succeeding...
+[21:34] isaacs: walkah: what's the next line?
+[21:34] tahu has joined the channel
+[21:34] warz has joined the channel
+[21:34] isaacs: walkah: or better yet, can you just gist the whole thing?
+[21:34] tjholowaychuk: and if so, is anyone against having removeAllListeners() remove them all?
+[21:34] walkah: isaacs: the next line is to peg cpu and just start eating ram :P
+[21:35] walkah: isaacs: gist coming
+[21:35] isaacs: walkah: hm... nvm, reproducing
+[21:35] dthompson has joined the channel
+[21:35] walkah: isaacs: https://gist.github.com/832762
+[21:35] isaacs: walkah: you found a good one!
+[21:35] isaacs: :)
+[21:36] walkah: isaacs: cookie! I want a cookie! :)
+[21:36] walkah: isaacs: i thought i'd hosed my setup, but confirmed with a friend that it wasn't working for him either
+[21:36] isaacs: yep
+[21:36] isaacs: wonder why it works for so many other libs
+[21:37] walkah: oh, if you let it run for long enough - i did ultimately get this:
+[21:37] walkah: FATAL ERROR: CALL_AND_RETRY_2 Allocation failed - process out of memory
+[21:37] mraleph: hehe
+[21:38] mraleph: moar memory
+[21:38] kjeldahl has joined the channel
+[21:38] walkah: mraleph: it's a pretty intense irc bot ;-)
+[21:39] isaacs: walkah: i see it.  it's creating an infinitely large array of filenames.  stat/lstat fail
+[21:39] isaacs: stupid #*@$@& symlinks
+[21:40] isaacs: :)
+[21:40] walkah: isaacs: nice find! 
+[21:40] eaton has joined the channel
+[21:40] eaton: ACTION pokes his head in. Ahaaa. So this is where the cool kids live.
+[21:41] walkah: ACTION pokes eaton in the eye
+[21:41] isaacs: walkah: ok, so, there seems to be some issue with bundled deps
+[21:41] isaacs: walkah: the lstat thing is easy enough to resolve, but there's some other issue.
+[21:41] isaacs: digging into it now
+[21:42] walkah: isaacs: right on. thanks! 
+[21:42] cronopio has joined the channel
+[21:43] bartt has joined the channel
+[21:43] slaskis: ACTION is frustrated with streams
+[21:43] walkah: slaskis: did you cross them?
+[21:44] slaskis: hah, i'm trying to queue them up actually
+[21:44] spetrea-home has joined the channel
+[21:44] slaskis: thinking pause/resume would suffice 
+[21:44] mnot has joined the channel
+[21:44] slaskis: but i just keep getting bad argument errors when trying to resume it
+[21:45] halfhalo has left the channel
+[21:45] halfhalo has joined the channel
+[21:45] halfhalo has left the channel
+[21:45] halfhalo has joined the channel
+[21:47] davidascher has joined the channel
+[21:47] slaskis: anyone have an implementation which sequences stream read/writes?
+[21:47] __tosh has joined the channel
+[21:47] jakehow has joined the channel
+[21:49] therrg has joined the channel
+[21:49] b_erb has left the channel
+[21:51] mikedeboer has joined the channel
+[21:52] admc has joined the channel
+[21:52] fizx has joined the channel
+[21:52] herbySk has joined the channel
+[21:55] zomgbie has joined the channel
+[21:56] isaacs: walkah: turns out that jerk actually has invalid stuff in its bundle
+[21:56] bradleymeck: rbranson about?
+[21:56] isaacs: walkah: half-uninstalled packages.
+[21:56] fizx_ has joined the channel
+[21:57] stephen_mcd has joined the channel
+[21:58] walkah: isaacs: gross! 
+[21:58] isaacs: walkah: i got a workaround.
+[21:59] jimt has joined the channel
+[21:59] walkah: isaacs: sounds like an issue against jerk is in order, but not looping infinitely would be nice :)
+[22:00] bentruyman has joined the channel
+[22:02] isaacs: walkah: ok, sudo npm i npm
+[22:02] isaacs: and then sudo npm i jerk
+[22:02] isaacs: shouldwork
+[22:02] isaacs: thanks for being a part of the process :)
+[22:02] Throlkim has joined the channel
+[22:03] walkah: isaacs: my pleasure. one day I might even be a more helpful part ;-)
+[22:03] eaton: Hey! it works!
+[22:03] yhahn: lol
+[22:03] arpegius has joined the channel
+[22:03] yhahn: ACTION waves
+[22:03] walkah: holy effing drupal people in here!
+[22:03] walkah: ACTION waves to yhahn 
+[22:03] yhahn: please don't call me that
+[22:04] walkah: yhahn: lol. i meant eaton
+[22:04] yhahn: he may not appreciate it either
+[22:04] slaskis: ryah: why would resume() throw TypeError: Bad Argument? can a readable stream 'timeout' or something?
+[22:04] walkah: yhahn: yeah, but i can take him
+[22:04] eaton: I like to think of myself as a multiclassed generalist who's just spent most of his XP on drupal up to this point
+[22:05] yhahn: : )
+[22:06] jimt_ has joined the channel
+[22:08] chorrell has joined the channel
+[22:09] tmzt: is res.redirect(302) supposed to change the url in the browser?
+[22:10] walkah: isaacs: it works! :)
+[22:10] tilgovi has joined the channel
+[22:10] isaacs: walkah: w00t!
+[22:11] tjholowaychuk: tmzt: ? res.redirect('url here')
+[22:11] fizx has joined the channel
+[22:11] walkah: isaacs: thanks for the quick turn around :-)
+[22:11] isaacs: walkah: np
+[22:11] MikhX has joined the channel
+[22:11] tjholowaychuk: tmzt: or res.redirect('back') etc, gotta tell it where to go :p
+[22:12] grim_fandango has joined the channel
+[22:13] JeffAtWork has joined the channel
+[22:13] grim_fandango: Folks, does node have any libraries that support SHA-1 with salts?
+[22:13] coltrane has joined the channel
+[22:14] aurynn: crypto does sha-1
+[22:16] JeffAtWork: in node v0.4 is there a way for me to configure how many concurrent connections the http and https built-in module uses? I see http://nodejs.org/docs/v0.4.0/api/http.html#agent.maxSockets but how to set it to something like 1000 instead of 5, BEFORE I start using it?
+[22:17] JeffAtWork: it seems to be a property of 'agent', but I don't think agent exists before the 1st request?
+[22:17] fly_ has joined the channel
+[22:18] JeffAtWork: var https = require('https'); https.getAgent(); errors with: node.js:116         throw e; // process.nextTick error, or 'error' event on first tick         ^ TypeError: Cannot read property 'port' of undefined     at Object.getAgent (https.js:47:15)
+[22:18] francescop has joined the channel
+[22:18] francescop has left the channel
+[22:20] hunterloftis has joined the channel
+[22:22] Me1000 has joined the channel
+[22:22] ezmobius has joined the channel
+[22:24] ianward has left the channel
+[22:25] srid: I got a list. I need to process each item in them. This processing takes some time, so I attach a callback. But I want to get notified only when *all* of the items are processed (sequentially or not, doesn't matter). what is the best way to do this in node.js? (I'm thinking of a `for` loop which doesn't fit in very well here)
+[22:25] slaskis: srid: a simple way is to use a counter
+[22:26] srid: counter needs to take errors/exceptions as well. actually I wonder if there is a node module for this
+[22:26] slaskis: if( ++counter == list.length ) done()
+[22:26] tjholowaychuk: --pending || done()
+[22:26] slaskis: yeah, well the idea is that callbacks also take errors though
+[22:26] tjholowaychuk: is what I like to do
+[22:26] slaskis: tjholowaychuk: ah, nice. you're full of little js tricks aren't ya?
+[22:26] tjholowaychuk: slaskis: yup :)
+[22:27] slaskis: using that ~"".indexOf() thing now
+[22:27] davidsklar has joined the channel
+[22:27] tjholowaychuk: i got that one from someone else
+[22:27] tjholowaychuk: not sure who
+[22:27] tjholowaychuk: saw it in a ruby script i think
+[22:27] tjholowaychuk: but its all over
+[22:28] slaskis: ah
+[22:28] slaskis: arghs, i'm getting frustrated with this, i wonder if it's a bug in the fs module or if i'm just retarded
+[22:29] slaskis: i should try to isolate it i guess
+[22:29] isaacs: srid: here's how i do that in npm: https://github.com/isaacs/npm/blob/master/lib/utils/async-map.js
+[22:29] isaacs: srid: that's a bit more complex, since i also get the list of results
+[22:29] isaacs: ;
+[22:30] davidsklar has joined the channel
+[22:31] jklabo: I am getting an unterminated string literal error on windows/cygwin but not on mac with the same code in both places, anyone seen this problem?
+[22:32] tmzt: tjholowaychuk: yeah I did, I did res.redirect(302, '/shorturl')
+[22:32] tmzt: but it didn't change in the browser
+[22:32] tmzt: also, with express, how do I make the sesion cookie work across subdomains?
+[22:32] tjholowaychuk: tmzt: other way around http://expressjs.com/guide.html#res-redirect-url-status-
+[22:33] tjholowaychuk: res.redirect('/foo', code)
+[22:33] tmzt: ok
+[22:33] tjholowaychuk: 302 is the default
+[22:33] bradleymeck: substack~
+[22:33] bradleymeck: jklabo paste bin
+[22:34] hij1nx has joined the channel
+[22:34] hornairs has joined the channel
+[22:35] jklabo: https://gist.github.com/832887
+[22:37] bradleymeck: jklabo does it just do that whenever you run node? or is it from requiring a file?
+[22:38] jklabo: no, node works ok if i am just running a test server or somethign
+[22:38] juan77: hi isaacs, I have sent a mail to npm-@googlegroups.com, about an error installing mysql-libmysqlclient hope I missing something....
+[22:38] jklabo: and, it works fine on mac
+[22:38] m14t has joined the channel
+[22:38] xyoni has joined the channel
+[22:39] isaacs: juan77: ok
+[22:39] Utkarsh has joined the channel
+[22:42] Ond has joined the channel
+[22:44] juan77: hi isaacs I have failed to send the mail, seems that the address doens't work... I have tried also npm@googlegroups.com.... I will put in issues....
+[22:45] isaacs: npm-
+[22:45] isaacs: you need the -
+[22:45] bradleymeck: does node's shebang detection handle arguments?
+[22:45] isaacs: you also may need to join the group
+[22:45] isaacs: bradleymeck: what do you mean?
+[22:45] isaacs: bradleymeck: you mean, can you do `#!/usr/local/bin/node debug` as your shebang?
+[22:45] bradleymeck: yea
+[22:45] isaacs: yes.
+[22:45] juan77: ahhh, ok isaacs, thanks.
+[22:45] isaacs: and it's not node that does that, but the shell.
+[22:45] bradleymeck: well expose_gc but the same
+[22:46] isaacs: bradleymeck: yeah
+[22:46] isaacs: bradleymeck: your script won't see those args, though
+[22:46] isaacs: bradleymeck: node strips them off.
+[22:46] bradleymeck: bleh, i was hoping the main module would consume them, makes sense i guess
+[22:47] tim_smar1 has joined the channel
+[22:47] isaacs: juan77: i see your github issue
+[22:50] dmcquay has joined the channel
+[22:50] kwik101 has joined the channel
+[22:51] ryah: tjholowaychuk: can express use the new https stuff?
+[22:51] tjholowaychuk: ryah: not yet, I have a fork of connect going to rewrite
+[22:51] tjholowaychuk: connect is the issue though not express
+[22:52] trentm has joined the channel
+[22:52] ryah: tjholowaychuk: is it hard to do?
+[22:52] ryah: :)
+[22:52] ryah: should just bit a little hack, or?
+[22:53] tjholowaychuk: ryah: nah, just need to inherit from https.Server and retire the middleware passed to createServer(foo,bar,baz)
+[22:53] tjholowaychuk: was never a fan of that anyway
+[22:53] ryah: ok
+[22:53] tjholowaychuk: can you set the options via some method? or only createServer() ?
+[22:53] McConnell has joined the channel
+[22:54] snearch has joined the channel
+[22:54] tjholowaychuk: if that is the case inheriting should be enough, then just connect.createServer().setWhatever({})
+[22:58] kkaefer: for some reason, libeio invokes my EIO_Prepare callback, but not the EIO_AfterPrepare callback
+[22:58] kkaefer: anyone ever experienced that?
+[22:59] ChrisPartridge has joined the channel
+[22:59] kkaefer: the function names in the eio_custom call are correct
+[22:59] jamesarosen has joined the channel
+[23:00] ryah: kkaefer: sounds like time for gdb :)
+[23:00] kkaefer: hm, ok
+[23:00] kkaefer: (node's also at 100% cpu)
+[23:01] kkaefer: hah, found it already
+[23:01] kkaefer: had a loop in the v8 process that didn't terminate, so it would never call the callback
+[23:02] mikeal has joined the channel
+[23:05] robmason has joined the channel
+[23:05] herbySk has joined the channel
+[23:06] ryah: mjr_: any luck repeating GH-680?
+[23:07] tim_smart has joined the channel
+[23:09] saikat has joined the channel
+[23:10] brianc: can anyone give me a pointer to a good library to look at to study node native extensions? 
+[23:12] bob2 has joined the channel
+[23:12] mjr_: ryah: it still happens from time to time, mostly when I restart things.
+[23:12] mjr_: So it's probably related to an outgoing connection closing
+[23:12] nonnikcam has joined the channel
+[23:13] mjr_: But it's hard to say,because there is a lot of stuff happening all at once.
+[23:13] mjr_: Which is why Ihaven't been able to isolate this into a test.
+[23:13] mraleph: ryah: mjr_: nowdays if you see something that can't possibly happen (like having a null in variable after assert) and you are running ia32 version of node — do a run with —noopt. just to be sure :-)
+[23:13] mjr_: Oh,I'll try that.
+[23:14] mjr_: I think ryah said that the asserts were getting pre-processed out though.
+[23:14] mjr_: Is that true, ryah?
+[23:14] ryah: that's true
+[23:15] ryah: https://github.com/ry/node/blob/0474ce67908c9afddab69d3f0eb53564b10e2ad1/wscript#L604
+[23:15] mraleph: ah. no worries than.
+[23:17] robmason has joined the channel
+[23:17] trotter has joined the channel
+[23:17] mraleph: but keep that in mind for a future. as we support more and more JS features in the optimizing pipeline, you might start seeing some weird things.
+[23:18] jpstrikesback has joined the channel
+[23:19] aguynamedben has joined the channel
+[23:20] wadey has joined the channel
+[23:21] mjr_: ryah: I can add some logging around where that exception happens if that would be useful to you.  Let me know what vars you want dumped.
+[23:22] muk_mb has joined the channel
+[23:23] ryah: mjr_: it would be interesting to stick a console.trace() into OutgoingMessage.prototype.detachSocket
+[23:23] ryah: and see the traces just before that exception happens
+[23:23] temp01 has joined the channel
+[23:23] ryah: also run with export NODE_DEBUG=http
+[23:23] ryah: and node_g
+[23:24] bob2 has left the channel
+[23:24] mjr_: OK, I'll try that.
+[23:25] mjr_: First I'm going to walk down the beach and get a burger.
+[23:25] mnot: mjr_: before you go - any plans to support dumping to a pcap save file?
+[23:25] mjr_: mnot: I haven't had much time to work on pcap stuff lately, but I'd love to support pcap files as well as live capture
+[23:25] mnot: mjr_: cool.
+[23:26] ziro` has joined the channel
+[23:26] mjr_: My top two priorities with pcap right now are to make jumping in on the middle of an HTTP sometimes work, as long as you see the first byte of a new request on an already open connection, and then to support the linux cooked if type, so -i any will work.
+[23:26] slaskis: so, i finally figured out what the bad argument error comes from when i use ReadStream#resume(), here's an example: https://gist.github.com/832967
+[23:27] mjr_: mnot: but if you want to contribute things to make offline work, I'm happy to pull them in.
+[23:27] slaskis: is this the expected behaviour? ryah ^^
+[23:27] mjr_: I need to do your entity encoding thing also that you already opened an issue on.
+[23:27] slaskis: (using 0.4.0 btw)
+[23:27] mnot: mjr_: ack
+[23:28] ryah: slaskis: no
+[23:28] ryah: slaskis: can you make a github issue?
+[23:28] slaskis: ryah: sure
+[23:33] spetrea-home has joined the channel
+[23:33] xla has joined the channel
+[23:33] SubStack: moo?
+[23:34] Ratty_: cow
+[23:34] slaskis: actually, does this one throw bad argument for you guys too? require("fs").createReadStream("/dev/random").resume()
+[23:34] zomgbie has joined the channel
+[23:37] montylounge has joined the channel
+[23:38] jacobolus has joined the channel
+[23:40] |Blaze| has joined the channel
+[23:41] amerine has joined the channel
+[23:42] davidc_ has joined the channel
+[23:42] slaskis: ryah: you've got yourself an issue: https://github.com/ry/node/issues/687
+[23:42] balaa_ has joined the channel
+[23:42] Lorentz: There are always new issues.
+[23:45] __tosh has joined the channel
+[23:47] srid: isaacs: thx for the async-map code.
+[23:48] dshaw has joined the channel
+[23:48] gf3 has joined the channel
+[23:50] wdperson_ has joined the channel
+[23:53] jashkenas has joined the channel
+[23:53] derferman has joined the channel
+[23:58] bradleymeck: substack: ping
+[23:59] broofa has joined the channel
